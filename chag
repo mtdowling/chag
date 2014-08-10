@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# chag:    Create annotated git tags from a changelog entry.
+# Author:  Michael Dowling <https://github.com/mtdowling>
+# License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
+# URL:     https://github.com/mtdowling/chag
+
 usage() {
   cat <<EOT
 Usage: chag [OPTIONS] COMMAND [ARGS]...
