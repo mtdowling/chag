@@ -2,11 +2,63 @@
 chag
 ====
 
-chag stands for changelog tag. It creates annotated git tags based on a
-changelog entry.
+*chag* stands for "changelog tag". It creates annotated git tags based on a
+changelog entry. You can also use chag simply to parse a changelog into a tag
+name, date, and description.
+
+chag expects changelog files to match the following template:
+
+1. Any number of lines can precede the start of the actual changelog entries
+   (e.g., title, description of the file, etc.).
+2. Each changelog entry MUST start with a header line that matches the
+   following regular expression: ``\d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)``.
+   The first part of the pattern is the version number, and the second
+   part of the pattern is the release date in the form of YYYY-MM-DD
+   (or YYYY-DD-MM works as well).
+3. After each header line is a border line (a continuous number of repeated
+   characters used to demarcate headings in markdown or reStructuredText),
+   followed by another empty new line.
+4. Next is the changelog content. This can be any free-form text. chag will
+   consume the content until the heading regular expression matches the
+   next entry or the end of the file.
+
+Example Changelog
+-----------------
+
+::
+
+    =========
+    CHANGELOG
+    =========
+
+    Any text can occur before the actual release not entries are found.
+
+    1.0.1 (2014-09-10)
+    ------------------
+
+    Optional description of the release notes.
+
+    * Updated something or another.
+    * Here is another bullet point.
+
+    1.0.1 (2014-09-01)
+    ------------------
+
+    * Some bullet point data.
 
 Usage
 -----
+
+::
+
+    Usage: chag [OPTIONS] COMMAND [ARGS]...
+
+    Options:
+      --help  Displays this message.
+
+    Commands:
+      parse
+      tag
 
 parse
 ~~~~~
@@ -15,15 +67,16 @@ Parses a changelog entry.
 
 ::
 
-    Usage: chag parse [OPTIONS] FILENAME [TAG]
+    Usage: chag parse [OPTIONS] FILENAME
 
     Options:
-      --help    Displays this message.
+      --tag      Optional tag to parse. If no value is provided, then
+                 the latest tag will be parsed.
+      --debug    Set to 1 to output debug information while executing.
+      --help     Displays this message.
 
     Arguments:
-      FILENAME  Path to the changelog file to parse.
-      TAG       Optional tag to parse. If no value is provided, then
-                the latest tag will be parsed.
+      FILENAME   Path to the changelog file to parse.
 
     Description:
       Parses a changelog entry from a changelog file. A changelog
@@ -40,11 +93,11 @@ Parses a changelog entry.
 
     Examples:
 
-      > ./chag /path/to/CHANGELOG.md
-      1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+      ./chag /path/to/CHANGELOG.md
+      Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
 
-      > ./chag /path/to/CHANGELOG.md 1.0.1
-      1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+      ./chag --tag 1.0.1 /path/to/CHANGELOG.md
+      Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
 
 tag
 ~~~
@@ -53,26 +106,30 @@ Creates an annotated git tag from a changelog entry.
 
 ::
 
-    Usage: chag tag [OPTIONS] FILENAME [TAG]
+    Usage: chag tag [OPTIONS] FILENAME
 
     Options:
-      --help    Displays this message.
-      --title   Optional title to use for the annotated tag description. When
-                pushing releases to GitHub releases, GitHub uses the first line
-                of a changelog entry as part of the title of a release. If your
-                changelog does not have a summary as the first line then you might
-                want to provide a summary manually to better display the title on
-                GitHub's releases.
-
-                Pass "{date}" to automatically fill in the date of the release
-                as the description title.
+      --tag      Optional tag to parse. If no value is provided, then
+                 the latest tag will be parsed. Defaults to "latest".
+      --message  Optional message to prepend to the annotated tag description.
+                 Pass "{date}" to automatically fill in the date of the release
+                 as the description title.
+      --sign     Make a GPG-signed tag, using the default git e-mail address's
+                 key.
+      --debug    Set to 1 to output debug information while executing.
+      --help     Displays this message.
 
     Arguments:
-      FILENAME  Path to the changelog to parse
-      TAG       Optional release tag entry to parse. If no value is
-                specified, then the latest entry is tagged.
+      FILENAME   Path to the changelog to parse
 
     Description:
       Parses a changelog entry for the given tag (or latest tag) and creates an
       annotated git tag based on the changelog entry.
 
+    Examples:
+      ./chag tag /path/to/CHANGELOG.md
+      ./chag tag --debug CHANGELOG.rst
+      ./chag tag --tag 4.1.0 CHANGELOG.md
+      ./chag tag --sign CHANGELOG.rst
+      ./chag tag --message "{date}" CHANGELOG.rst
+      ./chag tag --message "Release code name" CHANGELOG.rst

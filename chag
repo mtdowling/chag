@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# chag:    Create annotated git tags from a changelog entry.
+#
+# Create annotated git tags from a changelog entry.
+#
 # Author:  Michael Dowling <https://github.com/mtdowling>
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
 # URL:     https://github.com/mtdowling/chag
 
-usage() {
+chag_usage() {
   cat <<EOT
 Usage: chag [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  --help Displays this message.
+  --help  Displays this message.
 
 Commands:
   parse
@@ -18,17 +20,18 @@ Commands:
 EOT
 }
 
-usage_parse() {
+chag_parse_usage() {
   cat <<EOT
-Usage: chag parse [OPTIONS] FILENAME [TAG]
+Usage: chag parse [OPTIONS] FILENAME
 
 Options:
-  --help    Displays this message.
+  --tag      Optional tag to parse. If no value is provided, then
+             the latest tag will be parsed.
+  --debug    Set to 1 to output debug information while executing.
+  --help     Displays this message.
 
 Arguments:
-  FILENAME  Path to the changelog file to parse.
-  TAG       Optional tag to parse. If no value is provided, then
-            the latest tag will be parsed.
+  FILENAME   Path to the changelog file to parse.
 
 Description:
   Parses a changelog entry from a changelog file. A changelog
@@ -45,96 +48,147 @@ Output:
 
 Examples:
 
-  > ./chag /path/to/CHANGELOG.md
-  1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+  ./chag /path/to/CHANGELOG.md
+  Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
 
-  > ./chag /path/to/CHANGELOG.md 1.0.1
-  1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+  ./chag --tag 1.0.1 /path/to/CHANGELOG.md
+  Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
 
 EOT
 }
 
-usage_tag() {
+chag_tag_usage() {
   cat <<EOT
-Usage: chag tag [OPTIONS] FILENAME [TAG]
+Usage: chag tag [OPTIONS] FILENAME
 
 Options:
-  --help    Displays this message.
-  --title   Optional title to use for the annotated tag description. When
-            pushing releases to GitHub releases, GitHub uses the first line
-            of a changelog entry as part of the title of a release. If your
-            changelog does not have a summary as the first line then you might
-            want to provide a summary manually to better display the title on
-            GitHub's releases.
-
-            Pass "{date}" to automatically fill in the date of the release
-            as the description title.
+  --tag      Optional tag to parse. If no value is provided, then
+             the latest tag will be parsed. Defaults to "latest".
+  --message  Optional message to prepend to the annotated tag description.
+             Pass "{date}" to automatically fill in the date of the release
+             as the description title.
+  --sign     Make a GPG-signed tag, using the default git e-mail address's key.
+  --debug    Set to 1 to output debug information while executing.
+  --help     Displays this message.
 
 Arguments:
-  FILENAME  Path to the changelog to parse
-  TAG       Optional release tag entry to parse. If no value is
-            specified, then the latest entry is tagged.
+  FILENAME   Path to the changelog to parse
 
 Description:
   Parses a changelog entry for the given tag (or latest tag) and creates an
   annotated git tag based on the changelog entry.
 
+Examples:
+  ./chag tag /path/to/CHANGELOG.md
+  ./chag tag --debug CHANGELOG.rst
+  ./chag tag --tag 4.1.0 CHANGELOG.md
+  ./chag tag --sign CHANGELOG.rst
+  ./chag tag --message "{date}" CHANGELOG.rst
+  ./chag tag --message "Release code name" CHANGELOG.rst
+
 EOT
 }
 
-# Validate arguments for parse and tag commands
-# $1: FILENAME
-# $2: TAG
-validate_arguments() {
-  [ "$1" == "--help" ] && $3 && exit 0
-  [ -z "$1" ] && usage_parse && exit 1
-  [ ! -f "$1" ] && echo "File not found: $1" && exit 1
-  [ -z "$2" ] && echo 'TAG is empty.' && usage_parse && exit 1
+# Clear out the variables used in the script
+declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN=
+
+# Extracts options and arguments, validates, and calls a subcommand
+chag_main() {
+  # Show help if no options or arguments are provided
+  [ $# -eq 0 ] && set -- --help
+  [ "$1" == '--help' ] && chag_usage && exit 0
+  COMMAND="$1"
+  shift
+
+  # Call the appropriate command or display the command's help message
+  case "$COMMAND" in
+    parse)
+      [ "$1" == "--help" ] && chag_parse_usage && exit 0
+      parse_options $@
+      chag_parse
+      ;;
+    tag)
+      [ "$1" == "--help" ] && chag_tag_usage && exit 0
+      parse_options $@
+      chag_tag
+      ;;
+    *)
+      printf "ERROR: Unknown command '$COMMAND'.\n\n"
+      chag_usage && exit 1
+      ;;
+  esac
 }
 
-parse_command() {
-  filename=$1
-  tag=${2-"latest"}
-  validate_arguments $1 $2 "usage_parse"
-  heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
-  pattern=$heading
-  if [ "$tag" != "latest" ]; then
-    pattern="^$tag \(\d{4}\-\d{2}\-\d{2}\)\$"
+parse_options() {
+  while [ $# -gt 0 ]; do
+    opt="$1"
+    shift
+    case "$opt" in
+      --tag) TAG="$1"; shift ;;
+      --message) MESSAGE="$1"; shift ;;
+      --debug) DEBUG=1 ;;
+      --sign|-s) SIGN="--sign" ;;
+      --*) die "ERROR: Unexpected option: $opt" ;;
+      *) FILENAME=$opt; break ;;
+    esac
+  done
+
+  # Parse the FILENAME argument
+  [ "$FILENAME" == "" ] && die "$COMMAND requires a FILENAME argument";
+  [ ! -f "$FILENAME" ] && die "File not found: $FILENAME"
+  [ -z "$TAG" ] && TAG="latest"
+}
+
+# exits with an error message
+die() {
+  echo "$1" && exit 1
+}
+
+# Outputs debug information if DEBUG was passed
+debug() {
+  [ ! -z "$DEBUG" ] && printf "$@\n" >&2
+}
+
+# Parses a changelog and displays changelog information
+chag_parse() {
+  local heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
+  local pattern=$heading
+  if [ "$TAG" != "latest" ]; then
+    pattern="^$TAG \(\d{4}\-\d{2}\-\d{2}\)\$"
   fi
 
   # Find the tag pattern
-  match=$(grep -n -E "$pattern" $filename | head -n1)
+  local match=$(grep -n -E "$pattern" $FILENAME | head -n1)
   # The match MUST be found
-  [ "$match" == "" ] && echo "Tag $tag not found" && exit 1
+  [ "$match" == "" ] && echo "Tag $TAG not found" && exit 1
 
   # Parse the match: 0:0.0.0 (0000-00-00)
-  found_line=$(echo "$match" | cut -d ':' -f 1)
-  lastpart=$(echo "$match" | cut -d ':' -f 2)
-  found_tag=$(echo "$lastpart" | cut -d ' ' -f 1)
-  mdate=$(echo "$lastpart" | cut -d ' ' -f 2)
-  found_date=${mdate:1:10}
+  local found_line=$(echo "$match" | cut -d ':' -f 1)
+  local lastpart=$(echo "$match" | cut -d ':' -f 2)
+  local found_tag=$(echo "$lastpart" | cut -d ' ' -f 1)
+  local mdate=$(echo "$lastpart" | cut -d ' ' -f 2)
+  local found_date=${mdate:1:10}
+  local tmpfile=$(mktemp -t "tag-$found_tag.XXXXXXXXXX")
 
   # First line in the file of the changelog
-  start_line=$(($found_line + 2))
+  local start_line=$(($found_line + 2))
   # Find the length of the section
-  length=$(tail -n +$start_line "$filename" | \
-           grep -n -E "$heading" | \
-           head -n1 | \
-           cut -d ':' -f 1)
+  local length=$(tail -n +$start_line "$FILENAME" | \
+                 grep -n -E "$heading" | \
+                 head -n1 | \
+                 cut -d ':' -f 1)
   length=$(($length - 3))
-  # Create a temporary file to store the contents
-  tmpfile=$(mktemp -t "tag-$found_tag.XXXXXXXXXX")
 
   if [ "$length" -gt 0 ]; then
     # This is not at the end of the file
-    cat $filename | \
+    cat $FILENAME | \
         head -n $(($length + $start_line)) | \
         tail -n $length \
         > $tmpfile
   else
     # This is at the end of the file
-    len=$(cat $filename | wc -l)
-    cat $filename | \
+    local len=$(cat $FILENAME | wc -l)
+    cat $FILENAME | \
         tail -n $(($len - $start_line)) \
          > $tmpfile
   fi
@@ -142,59 +196,39 @@ parse_command() {
   echo $found_tag $found_date $tmpfile
 }
 
-tag_command() {
-  if [ "$1" == "--title" ]; then
-    # Handle optional title option
-    title="$2"
-    filename="$3"
-    tag=${4-"latest"}
-  else
-    title=""
-    filename="$1"
-    tag=${2-"latest"}
-  fi
+# Creates an annotated git tag based on a changelog entry
+chag_tag() {
+  data="$(chag_parse --tag $TAG $FILENAME 2>&1)"
+  [ "$?" -eq 1 ] && die $data
 
-  validate_arguments $filename $tag "usage_tag"
-  data="$(parse_command $filename $tag 2>&1)"
-  [ "$?" -eq 1 ] && echo $data && exit 1
-
+  # Split the result into individual pieces
   tag=$(echo $data | cut -d ' ' -f 1)
   date=$(echo $data | cut -d ' ' -f 2)
   tmp=$(echo $data | cut -d ' ' -f 3)
 
-  echo "Parsed the $tag changelog entry from $filename:"
-  printf " - Tag:  $tag\n - Date: $date\n - File: $tmp\n\n"
+  debug "Parsed the $tag changelog entry from $FILENAME:"
+  debug "  tag: $tag, date: $date, tmpfile: $tmp"
 
   # Use substitution for {date}
-  if [ "$title" == '{date}' ]; then
-    title="$date"
-  fi
+  [ "$MESSAGE" == '{date}' ] && MESSAGE="$date"
 
-  # Prepend to the title to show up better in GitHub releases
-  if [ "$title" != "" ]; then
-    printf "$title\n\n" \
-        | cat - $tmp > /tmp/out \
-        && mv /tmp/out $tmp
+  # Prepend to the title if necessary
+  if [ "$MESSAGE" != "" ]; then
+    printf "$MESSAGE\n\n" | cat - $tmp > /tmp/out && mv /tmp/out $tmp
   fi
 
   # Run the command and get the exit code
-  cmd="git tag -a -F $tmp $tag"
-  $cmd
-  success=$?
-
+  local cmd="git tag $SIGN -a -F $tmp $tag"
+  debug "Running $cmd" && $cmd
+  local success="$?"
   if [ $success -ne 0 ]; then
-    echo "[FAILURE] $cmd"
-  else
-    printf "[SUCCESS] $cmd\n\nTagged $tag with the following annotation:\n\n"
-    cat $tmp && echo ""
+    rm $tmp || echo "Temp file not found: $tmp"
+    die "[FAILURE] Failed tagging $tag: Error code $success"
   fi
 
-  rm $tmp && exit $success
+  echo "[SUCCESS] Tagged the $tag release"
+  debug "Tagged $tag with the following annotation:\n\n$(cat $tmp)"
+  rm $tmp || echo "Temp file not found: $tmp"
 }
 
-case "$1" in
-  parse  ) parse_command "$2" "$3";;
-  tag    ) tag_command "$2" "$3" "$4" "$5";;
-  --help ) usage && exit 0;;
-  *      ) usage && exit 1;;
-esac
+chag_main "$@"
