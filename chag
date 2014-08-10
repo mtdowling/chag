@@ -34,7 +34,7 @@ Description:
   Parses a changelog entry from a changelog file. A changelog
   file consists of various release entries, each designated by a line
   that matches the following pattern: \d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)
-  After each relese entry heading, are two lines of text that are
+  After each release entry heading, are two lines of text that are
   disregarded, followed by n number of lines of the changelog entry
   content. An entry is parsed until the next heading or EOF.
 
