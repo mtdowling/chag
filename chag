@@ -62,14 +62,16 @@ chag_tag_usage() {
 Usage: chag tag [OPTIONS] FILENAME
 
 Options:
-  --tag      Optional tag to parse. If no value is provided, then
-             the latest tag will be parsed. Defaults to "latest".
-  --message  Optional message to prepend to the annotated tag description.
-             Pass "{date}" to automatically fill in the date of the release
-             as the description title.
-  --sign     Make a GPG-signed tag, using the default git e-mail address's key.
-  --debug    Set to 1 to output debug information while executing.
-  --help     Displays this message.
+  --tag       Optional tag to parse. If no value is provided, then
+              the latest tag will be parsed. Defaults to "latest".
+  --message   Optional message to prepend to the annotated tag description.
+              Pass "{date}" to automatically fill in the date of the release
+              as the description title.
+  --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
+              key.
+  --force|-f  Delete an existing tag if present.
+  --debug     Set to 1 to output debug information while executing.
+  --help      Displays this message.
 
 Arguments:
   FILENAME   Path to the changelog to parse
@@ -83,6 +85,9 @@ Examples:
   ./chag tag --debug CHANGELOG.rst
   ./chag tag --tag 4.1.0 CHANGELOG.md
   ./chag tag --sign CHANGELOG.rst
+  ./chag tag -s CHANGELOG.rst
+  ./chag tag --force CHANGELOG.rst
+  ./chag tag -f CHANGELOG.rst
   ./chag tag --message "{date}" CHANGELOG.rst
   ./chag tag --message "Release code name" CHANGELOG.rst
 
@@ -90,7 +95,7 @@ EOT
 }
 
 # Clear out the variables used in the script
-declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN=
+declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN= FORCE=
 
 # Extracts options and arguments, validates, and calls a subcommand
 chag_main() {
@@ -114,7 +119,8 @@ chag_main() {
       ;;
     *)
       printf "ERROR: Unknown command '$COMMAND'.\n\n"
-      chag_usage && exit 1
+      chag_usage
+      exit 1
       ;;
   esac
 }
@@ -128,6 +134,7 @@ parse_options() {
       --message) MESSAGE="$1"; shift ;;
       --debug) DEBUG=1 ;;
       --sign|-s) SIGN="--sign" ;;
+      --force|-f) FORCE="--force" ;;
       --*) die "ERROR: Unexpected option: $opt" ;;
       *) FILENAME=$opt; break ;;
     esac
@@ -136,12 +143,15 @@ parse_options() {
   # Parse the FILENAME argument
   [ "$FILENAME" == "" ] && die "$COMMAND requires a FILENAME argument";
   [ ! -f "$FILENAME" ] && die "File not found: $FILENAME"
+
+  # If no TAG is supplied, then default to the "latest" tag.
   [ -z "$TAG" ] && TAG="latest"
 }
 
 # exits with an error message
 die() {
-  echo "$1" && exit 1
+  echo "$1"
+  exit 1
 }
 
 # Outputs debug information if DEBUG was passed
@@ -151,16 +161,18 @@ debug() {
 
 # Parses a changelog and displays changelog information
 chag_parse() {
-  local heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
-  local pattern=$heading
+  local pattern heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
+
+  # The regex patterns depends on if we are getting the latest or a version
   if [ "$TAG" != "latest" ]; then
     pattern="^$TAG \(\d{4}\-\d{2}\-\d{2}\)\$"
+  else
+    pattern=$heading
   fi
 
   # Find the tag pattern
   local match=$(grep -n -E "$pattern" $FILENAME | head -n1)
-  # The match MUST be found
-  [ "$match" == "" ] && echo "Tag $TAG not found" && exit 1
+  [ "$match" == "" ] && die "Tag $TAG not found"
 
   # Parse the match: 0:0.0.0 (0000-00-00)
   local found_line=$(echo "$match" | cut -d ':' -f 1)
@@ -177,20 +189,17 @@ chag_parse() {
                  grep -n -E "$heading" | \
                  head -n1 | \
                  cut -d ':' -f 1)
+  # Remove the extra lines
   length=$(($length - 3))
 
   if [ "$length" -gt 0 ]; then
-    # This is not at the end of the file
-    cat $FILENAME | \
-        head -n $(($length + $start_line)) | \
-        tail -n $length \
-        > $tmpfile
+    # This is NOT at the end of the file
+    local headn=$(($length + $start_line))
+    cat $FILENAME | head -n $headn | tail -n $length > $tmpfile
   else
     # This is at the end of the file
     local len=$(cat $FILENAME | wc -l)
-    cat $FILENAME | \
-        tail -n $(($len - $start_line)) \
-         > $tmpfile
+    cat $FILENAME | tail -n $(($len - $start_line)) > $tmpfile
   fi
 
   echo $found_tag $found_date $tmpfile
@@ -209,18 +218,19 @@ chag_tag() {
   debug "Parsed the $tag changelog entry from $FILENAME:"
   debug "  tag: $tag, date: $date, tmpfile: $tmp"
 
-  # Use substitution for {date}
-  [ "$MESSAGE" == '{date}' ] && MESSAGE="$date"
-
   # Prepend to the title if necessary
   if [ "$MESSAGE" != "" ]; then
+    # Use substitution for {date}
+    [ "$MESSAGE" == '{date}' ] && MESSAGE="$date"
     printf "$MESSAGE\n\n" | cat - $tmp > /tmp/out && mv /tmp/out $tmp
   fi
 
   # Run the command and get the exit code
-  local cmd="git tag $SIGN -a -F $tmp $tag"
-  debug "Running $cmd" && $cmd
+  local cmd="git tag $SIGN $FORCE -a -F $tmp $tag"
+  debug "Running $cmd"
+  $cmd
   local success="$?"
+
   if [ $success -ne 0 ]; then
     rm $tmp || echo "Temp file not found: $tmp"
     die "[FAILURE] Failed tagging $tag: Error code $success"

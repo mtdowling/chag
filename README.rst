@@ -109,15 +109,16 @@ Creates an annotated git tag from a changelog entry.
     Usage: chag tag [OPTIONS] FILENAME
 
     Options:
-      --tag      Optional tag to parse. If no value is provided, then
-                 the latest tag will be parsed. Defaults to "latest".
-      --message  Optional message to prepend to the annotated tag description.
-                 Pass "{date}" to automatically fill in the date of the release
-                 as the description title.
-      --sign     Make a GPG-signed tag, using the default git e-mail address's
-                 key.
-      --debug    Set to 1 to output debug information while executing.
-      --help     Displays this message.
+      --tag       Optional tag to parse. If no value is provided, then
+                  the latest tag will be parsed. Defaults to "latest".
+      --message   Optional message to prepend to the annotated tag description.
+                  Pass "{date}" to automatically fill in the date of the release
+                  as the description title.
+      --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
+                  key.
+      --force|-f  Delete an existing tag if present.
+      --debug     Set to 1 to output debug information while executing.
+      --help      Displays this message.
 
     Arguments:
       FILENAME   Path to the changelog to parse
@@ -131,5 +132,8 @@ Creates an annotated git tag from a changelog entry.
       ./chag tag --debug CHANGELOG.rst
       ./chag tag --tag 4.1.0 CHANGELOG.md
       ./chag tag --sign CHANGELOG.rst
+      ./chag tag -s CHANGELOG.rst
+      ./chag tag --force CHANGELOG.rst
+      ./chag tag -f CHANGELOG.rst
       ./chag tag --message "{date}" CHANGELOG.rst
       ./chag tag --message "Release code name" CHANGELOG.rst
