@@ -5,6 +5,7 @@
 # Author:  Michael Dowling <https://github.com/mtdowling>
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
 # URL:     https://github.com/mtdowling/chag
+# Version: 0.0.1
 
 chag_usage() {
   cat <<EOT
