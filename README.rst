@@ -13,7 +13,7 @@ parse
 
 Parses a changelog entry.
 
-.. ::
+::
 
     Usage: chag parse [OPTIONS] FILENAME [TAG]
 
@@ -51,7 +51,7 @@ tag
 
 Creates an annotated git tag from a changelog entry.
 
-.. ::
+::
 
     Usage: chag tag [OPTIONS] FILENAME [TAG]
 
