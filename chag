@@ -82,7 +82,7 @@ Description:
 EOT
 }
 
-# Validate arguments for pase and tag commands
+# Validate arguments for parse and tag commands
 # $1: FILENAME
 # $2: TAG
 validate_arguments() {
