@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+usage() {
+  cat <<EOT
+Usage: chag [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help Displays this message.
+
+Commands:
+  parse
+  tag
+
+EOT
+}
+
+usage_parse() {
+  cat <<EOT
+Usage: chag parse [OPTIONS] FILENAME [TAG]
+
+Options:
+  --help    Displays this message.
+
+Arguments:
+  FILENAME  Path to the changelog file to parse.
+  TAG       Optional tag to parse. If no value is provided, then
+            the latest tag will be parsed.
+
+Description:
+  Parses a changelog entry from a changelog file. A changelog
+  file consists of various release entries, each designated by a line
+  that matches the following pattern: \d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)
+  After each relese entry heading, are two lines of text that are
+  disregarded, followed by n number of lines of the changelog entry
+  content. An entry is parsed until the next heading or EOF.
+
+Output:
+  Outputs the tag of the corresponding entry, the date of the
+  entry, and the path to a file on disk containing the contents
+  of the entry, all separated by a single space.
+
+Examples:
+
+  > ./chag /path/to/CHANGELOG.md
+  1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+
+  > ./chag /path/to/CHANGELOG.md 1.0.1
+  1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+
+EOT
+}
+
+usage_tag() {
+  cat <<EOT
+Usage: chag tag [OPTIONS] FILENAME [TAG]
+
+Options:
+  --help    Displays this message.
+  --title   Optional title to use for the annotated tag description. When
+            pushing releases to GitHub releases, GitHub uses the first line
+            of a changelog entry as part of the title of a release. If your
+            changelog does not have a summary as the first line then you might
+            want to provide a summary manually to better display the title on
+            GitHub's releases.
+
+            Pass "{date}" to automatically fill in the date of the release
+            as the description title.
+
+Arguments:
+  FILENAME  Path to the changelog to parse
+  TAG       Optional release tag entry to parse. If no value is
+            specified, then the latest entry is tagged.
+
+Description:
+  Parses a changelog entry for the given tag (or latest tag) and creates an
+  annotated git tag based on the changelog entry.
+
+EOT
+}
+
+# Validate arguments for pase and tag commands
+# $1: FILENAME
+# $2: TAG
+validate_arguments() {
+  [ "$1" == "--help" ] && $3 && exit 0
+  [ -z "$1" ] && usage_parse && exit 1
+  [ ! -f "$1" ] && echo "File not found: $1" && exit 1
+  [ -z "$2" ] && echo 'TAG is empty.' && usage_parse && exit 1
+}
+
+parse_command() {
+  filename=$1
+  tag=${2-"latest"}
+  validate_arguments $1 $2 "usage_parse"
+  heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
+  pattern=$heading
+  if [ "$tag" != "latest" ]; then
+    pattern="^$tag \(\d{4}\-\d{2}\-\d{2}\)\$"
+  fi
+
+  # Find the tag pattern
+  match=$(grep -n -E "$pattern" $filename | head -n1)
+  # The match MUST be found
+  [ "$match" == "" ] && echo "Tag $tag not found" && exit 1
+
+  # Parse the match: 0:0.0.0 (0000-00-00)
+  found_line=$(echo "$match" | cut -d ':' -f 1)
+  lastpart=$(echo "$match" | cut -d ':' -f 2)
+  found_tag=$(echo "$lastpart" | cut -d ' ' -f 1)
+  mdate=$(echo "$lastpart" | cut -d ' ' -f 2)
+  found_date=${mdate:1:10}
+
+  # First line in the file of the changelog
+  start_line=$(($found_line + 2))
+  # Find the length of the section
+  length=$(tail -n +$start_line "$filename" | \
+           grep -n -E "$heading" | \
+           head -n1 | \
+           cut -d ':' -f 1)
+  length=$(($length - 3))
+  # Create a temporary file to store the contents
+  tmpfile=$(mktemp -t "tag-$found_tag.XXXXXXXXXX")
+
+  if [ "$length" -gt 0 ]; then
+    # This is not at the end of the file
+    cat $filename | \
+        head -n $(($length + $start_line)) | \
+        tail -n $length \
+        > $tmpfile
+  else
+    # This is at the end of the file
+    len=$(cat $filename | wc -l)
+    cat $filename | \
+        tail -n $(($len - $start_line)) \
+         > $tmpfile
+  fi
+
+  echo $found_tag $found_date $tmpfile
+}
+
+tag_command() {
+  if [ "$1" == "--title" ]; then
+    # Handle optional title option
+    title="$2"
+    filename="$3"
+    tag=${4-"latest"}
+  else
+    title=""
+    filename="$1"
+    tag=${2-"latest"}
+  fi
+
+  validate_arguments $filename $tag "usage_tag"
+  data="$(parse_command $filename $tag 2>&1)"
+  [ "$?" -eq 1 ] && echo $data && exit 1
+
+  tag=$(echo $data | cut -d ' ' -f 1)
+  date=$(echo $data | cut -d ' ' -f 2)
+  tmp=$(echo $data | cut -d ' ' -f 3)
+
+  echo "Parsed the $tag changelog entry from $filename:"
+  printf " - Tag:  $tag\n - Date: $date\n - File: $tmp\n\n"
+
+  # Use substitution for {date}
+  if [ "$title" == '{date}' ]; then
+    title="$date"
+  fi
+
+  # Prepend to the title to show up better in GitHub releases
+  if [ "$title" != "" ]; then
+    printf "$title\n\n" \
+        | cat - $tmp > /tmp/out \
+        && mv /tmp/out $tmp
+  fi
+
+  # Run the command and get the exit code
+  cmd="git tag -a -F $tmp $tag"
+  $cmd
+  success=$?
+
+  if [ $success -ne 0 ]; then
+    echo "[FAILURE] $cmd"
+  else
+    printf "[SUCCESS] $cmd\n\nTagged $tag with the following annotation:\n\n"
+    cat $tmp && echo ""
+  fi
+
+  rm $tmp && exit $success
+}
+
+case "$1" in
+  parse  ) parse_command "$2" "$3";;
+  tag    ) tag_command "$2" "$3" "$4" "$5";;
+  --help ) usage && exit 0;;
+  *      ) usage && exit 1;;
+esac
