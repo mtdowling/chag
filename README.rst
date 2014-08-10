@@ -137,3 +137,16 @@ Creates an annotated git tag from a changelog entry.
       ./chag tag -f CHANGELOG.rst
       ./chag tag --message "{date}" CHANGELOG.rst
       ./chag tag --message "Release code name" CHANGELOG.rst
+
+Executing ``chag tag`` will have output similar to the following:
+
+::
+
+    ./chag tag --debug CHANGELOG.rst
+    Parsed the 0.0.1 changelog entry from CHANGELOG.rst:
+      tag: 0.0.1, date: 2014-09-10, tmpfile: /var/folders/2d//T/tag-0.0.1.XXXXXXXXXX.QjNa2HSO
+    Running git tag -a -F /var/folders/2d//T/tag-0.0.1.XXXXXXXXXX.QjNa2HSO
+    [SUCCESS] Tagged the 0.0.1 release
+    Tagged 0.0.1 with the following annotation:
+
+    Initial release.
