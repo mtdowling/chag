@@ -72,7 +72,7 @@ Parses a changelog entry.
     Options:
       --tag      Optional tag to parse. If no value is provided, then
                  the latest tag will be parsed.
-      --debug    Set to 1 to output debug information while executing.
+      --debug    Output debug information while executing.
       --help     Displays this message.
 
     Arguments:
@@ -117,7 +117,7 @@ Creates an annotated git tag from a changelog entry.
       --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
                   key.
       --force|-f  Delete an existing tag if present.
-      --debug     Set to 1 to output debug information while executing.
+      --debug     Output debug information while executing.
       --help      Displays this message.
 
     Arguments:

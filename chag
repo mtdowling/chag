@@ -5,7 +5,7 @@
 # Author:  Michael Dowling <https://github.com/mtdowling>
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
 # URL:     https://github.com/mtdowling/chag
-# Version: 0.0.1
+# Version: 0.0.2
 
 chag_usage() {
   cat <<EOT
@@ -28,7 +28,7 @@ Usage: chag parse [OPTIONS] FILENAME
 Options:
   --tag      Optional tag to parse. If no value is provided, then
              the latest tag will be parsed.
-  --debug    Set to 1 to output debug information while executing.
+  --debug    Output debug information while executing.
   --help     Displays this message.
 
 Arguments:
@@ -71,7 +71,7 @@ Options:
   --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
               key.
   --force|-f  Delete an existing tag if present.
-  --debug     Set to 1 to output debug information while executing.
+  --debug     Output debug information while executing.
   --help      Displays this message.
 
 Arguments:

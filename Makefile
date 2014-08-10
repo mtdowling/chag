@@ -1,2 +1,2 @@
 tag:
-	./chag tag --debug CHANGELOG.rst
+	./chag tag --sign --debug CHANGELOG.rst
