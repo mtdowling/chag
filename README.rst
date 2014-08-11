@@ -69,6 +69,9 @@ Example Changelog
 
     * Some bullet point data.
 
+See chag's `CHANGELOG.rst <https://github.com/mtdowling/chag/blob/master/CHANGELOG.rst>`_
+file for more examples.
+
 Usage
 -----
 
