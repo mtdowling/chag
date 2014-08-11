@@ -64,7 +64,7 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   run $chagcmd tag --debug --tag 0.0.1 CHANGELOG.rst
   [ $status -eq 0 ]
   [ "${lines[0]}" == 'Parsed the 0.0.1 changelog entry from CHANGELOG.rst:' ]
-  [ $(expr "${lines[1]}" : '  tag: 0.0.1, date: 2014-09-10, tmpfile: *') -ne 0 ]
+  [ $(expr "${lines[1]}" : '  tag: 0.0.1, date: 2014-08-10, tmpfile: *') -ne 0 ]
   [ $(expr "${lines[2]}" : 'Running git tag   -a -F *') -ne 0 ]
   [ "${lines[3]}" == '[SUCCESS] Tagged the 0.0.1 release' ]
   run git tag -l -n1 0.0.1

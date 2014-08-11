@@ -12,7 +12,7 @@ set -e
 unset COMMAND FILENAME TAG MESSAGE OUTPUT SIGN FORCE ADDV
 
 version() {
-  echo "chag 0.0.4"
+  echo "chag 0.1.0"
 }
 
 usage() {

@@ -46,7 +46,7 @@ delete_changelog() {
   run ./chag parse --tag 0.0.1 CHANGELOG.rst
   [ $status -eq 0 ]
   # The filename is randomly generated, so just check for "/"
-  [ $(expr "${lines[0]}" : "0.0.1 2014-09-10 /") -ne 0 ]
+  [ $(expr "${lines[0]}" : "0.0.1 2014-08-10 /") -ne 0 ]
   # Ensure the file exists
   file=$(echo ${lines[0]} | cut -d ' ' -f 3)
   [ -f "$file" ]
@@ -61,7 +61,7 @@ delete_changelog() {
   run ./chag parse $BATS_TMPDIR/test-changelog
   delete_changelog
   [ $status -eq 0 ]
-  [ $(expr "${lines[0]}" : "0.0.2 2014-09-10 /") -ne 0 ]
+  [ $(expr "${lines[0]}" : "0.0.2 2014-08-10 /") -ne 0 ]
   file=$(echo ${lines[0]} | cut -d ' ' -f 3)
   [ -f "$file" ]
   [ $(cat "$file") == '* Correcting ``--debug`` description.' ]
