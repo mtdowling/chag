@@ -6,6 +6,10 @@ chag
 changelog entry. You can also use chag simply to parse a changelog into a tag
 name, date, and description.
 
+.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
+   :target: https://travis-ci.org/mtdowling/chag
+   :alt: Build status
+
 Installation
 ------------
 
@@ -40,10 +44,6 @@ chag expects changelog files to match the following template:
 4. Next is the changelog content. This can be any free-form text. chag will
    consume the content until the heading regular expression matches the
    next entry or the end of the file.
-
-.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
-   :target: https://travis-ci.org/mtdowling/chag
-   :alt: Build status
 
 Example Changelog
 ~~~~~~~~~~~~~~~~~
