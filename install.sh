@@ -8,7 +8,7 @@ CHAG_SOURCE="https://raw.githubusercontent.com/mtdowling/chag/$CHAG_VERSION/chag
 
 echo "=> Downloading chag to '$CHAG_DIR'"
 curl -sS "$CHAG_SOURCE" -o "$CHAG_DIR/chag" || {
-  echo >&2 "Failed to download '$CHAG_SOURCE'.."
+  echo >&2 "Failed to download '$CHAG_SOURCE'"
   return 1
 }
 

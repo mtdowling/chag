@@ -6,12 +6,17 @@
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
 # URL:     https://github.com/mtdowling/chag
 
-chag_version() {
+set -e
+
+# Clear out the variables used in the script
+unset COMMAND FILENAME TAG MESSAGE OUTPUT SIGN FORCE ADDV
+
+version() {
   echo "chag 0.0.4"
 }
 
-chag_usage() {
-  chag_version
+usage() {
+  version
   cat <<EOT
 Usage: chag [OPTIONS] COMMAND [ARGS]...
 
@@ -26,7 +31,7 @@ Commands:
 EOT
 }
 
-chag_parse_usage() {
+parse_usage() {
   cat <<EOT
 Usage: chag parse [OPTIONS] FILENAME
 
@@ -63,7 +68,7 @@ Examples:
 EOT
 }
 
-chag_tag_usage() {
+tag_usage() {
   cat <<EOT
 Usage: chag tag [OPTIONS] FILENAME
 
@@ -101,17 +106,27 @@ Examples:
 EOT
 }
 
-# Clear out the variables used in the script
-declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN= FORCE= ADDV=
+# exits with an error message
+die() {
+  echo "$@" 1>&2
+  exit 1
+}
+
+# Outputs debug information if DEBUG was passed
+debug() {
+  if [ ! -z "$DEBUG" ]; then
+    printf "$@\n" >&2
+  fi
+}
 
 # Extracts options and arguments, validates, and calls a subcommand
-chag_main() {
+main() {
   # Show help if no options or arguments are provided
   [ $# -eq 0 ] && set -- --help
 
   # Showing help or the version should exit immediately
-  [ "$1" == '--help' ] && chag_usage && exit 0
-  [ "$1" == '--version' ] && chag_version && exit 0
+  [ "$1" == '--help' ] && usage && exit 0
+  [ "$1" == '--version' ] && version && exit 0
 
   COMMAND="$1"
   shift
@@ -119,23 +134,24 @@ chag_main() {
   # Call the appropriate command or display the command's help message
   case "$COMMAND" in
     parse)
-      [ "$1" == "--help" ] && chag_parse_usage && exit 0
+      [ "$1" == "--help" ] && parse_usage && exit 0
       parse_options $@
-      chag_parse
+      parse
       ;;
     tag)
-      [ "$1" == "--help" ] && chag_tag_usage && exit 0
+      [ "$1" == "--help" ] && tag_usage && exit 0
       parse_options $@
-      chag_tag
+      tag
       ;;
     *)
       printf "ERROR: Unknown command '$COMMAND'.\n\n"
-      chag_usage
+      usage
       exit 1
       ;;
   esac
 }
 
+# Parses the provided options, gets FILENAME, and adds a default TAG
 parse_options() {
   while [ $# -gt 0 ]; do
     opt="$1"
@@ -157,22 +173,13 @@ parse_options() {
   [ ! -f "$FILENAME" ] && die "File not found: $FILENAME"
 
   # If no TAG is supplied, then default to the "latest" tag.
-  [ -z "$TAG" ] && TAG="latest"
-}
-
-# exits with an error message
-die() {
-  echo "$@" 1>&2;
-  exit 1
-}
-
-# Outputs debug information if DEBUG was passed
-debug() {
-  [ ! -z "$DEBUG" ] && printf "$@\n" >&2
+  if [ -z "$TAG" ]; then
+    TAG="latest"
+  fi
 }
 
 # Parses a changelog and displays changelog information
-chag_parse() {
+parse() {
   local heading='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
   local pattern_end='\([[:digit:]]{4}\-[[:digit:]]{2}\-[[:digit:]]{2}\)$'
   local pattern+=" $pattern_end"
@@ -218,8 +225,8 @@ chag_parse() {
 }
 
 # Creates an annotated git tag based on a changelog entry
-chag_tag() {
-  data="$(chag_parse --tag $TAG $FILENAME 2>&1)" || {
+tag() {
+  data="$(parse --tag $TAG $FILENAME 2>&1)" || {
     die "Failed to parse $TAG from $FILENAME"
   }
 
@@ -229,7 +236,9 @@ chag_tag() {
   tmp=$(echo $data | cut -d ' ' -f 3)
 
   # Prepend a "v" if required
-  [ ! -z "$ADDV" ] && tag="v$tag"
+  if [ ! -z "$ADDV" ]; then
+    tag="v$tag"
+  fi
 
   debug "Parsed the $tag changelog entry from $FILENAME:"
   debug "  tag: $tag, date: $date, tmpfile: $tmp"
@@ -237,7 +246,9 @@ chag_tag() {
   # Prepend to the title if necessary
   if [ "$MESSAGE" != "" ]; then
     # Use substitution for {date}
-    [ "$MESSAGE" == '{date}' ] && MESSAGE="$date"
+    if [ "$MESSAGE" == '{date}' ]; then
+      MESSAGE="$date"
+    fi
     printf "$MESSAGE\n\n" | cat - $tmp > /tmp/out && mv /tmp/out $tmp
   fi
 
@@ -255,4 +266,4 @@ chag_tag() {
   rm $tmp || echo "Temp file not found: $tmp"
 }
 
-chag_main "$@"
+main "$@"
