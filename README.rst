@@ -11,6 +11,8 @@ Installation
 
 To install you could use the install script using cURL:
 
+::
+
     curl https://raw.githubusercontent.com/mtdowling/chag/master/install.sh | bash
 
 You can customize the install source, directory and profile using the
