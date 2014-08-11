@@ -6,6 +6,23 @@ chag
 changelog entry. You can also use chag simply to parse a changelog into a tag
 name, date, and description.
 
+Installation
+------------
+
+To install you could use the install script using cURL:
+
+    curl https://raw.githubusercontent.com/mtdowling/chag/master/install.sh | bash
+
+You can customize the install source, directory and profile using the
+CHAG_DIR and CHAG_VERSION environment variables. The script will place chag
+in /usr/local/bin by default.
+
+You can also install chag by cloning the repository and placing it somewhere
+in your path manually.
+
+Changelog Format
+----------------
+
 chag expects changelog files to match the following template:
 
 1. Any number of lines can precede the start of the actual changelog entries
@@ -27,7 +44,7 @@ chag expects changelog files to match the following template:
    :alt: Build status
 
 Example Changelog
------------------
+~~~~~~~~~~~~~~~~~
 
 ::
 
