@@ -4,4 +4,7 @@ tag:
 test:
 	bats test/
 
+deploy: tag
+	git push origin --tags
+
 .PHONY: test
