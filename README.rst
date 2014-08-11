@@ -2,13 +2,39 @@
 chag
 ====
 
-*chag* stands for "changelog tag". It creates annotated git tags based on a
-changelog entry. You can also use chag simply to parse a changelog into a tag
-name, date, and description.
+*chag* stands for "changelog tag". It allows you to use your project's
+changelog as the canonical source of change data.
+
+You can use chag to:
+
+1. Create annotated git tags based on a changelog entry.
+2. Parse a changelog into a tag name, date, and description.
+
+Adding snippets of your changelog to annotated git tags provides the following
+benefits:
+
+1. Your project's GitHub releases atom feed contains release notes that can be
+   used to keep consumers of your project up to date. Take a look at
+   `chag's atom feed <https://github.com/mtdowling/chag/releases.atom>`_ for
+   an example.
+2. If you use `Travis CI's deploy feature <http://docs.travis-ci.com/user/deployment/releases/>`_
+   to automatically deploy to GitHub eleases, then the contents of your GitHub
+   releases will mirror the contents of the corresponding changelog entry.
 
 .. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
    :target: https://travis-ci.org/mtdowling/chag
    :alt: Build status
+
+Workflow
+--------
+
+Using "chag tag" requires the following workflow:
+
+1. Create a changelog entry in your project's CHANGELOG file that contains the
+   version to be released and information about the release.
+2. Commit the CHANGELOG changes.
+3. Run ``chag tag CHANGELOG`` (where CHANGELOG is the path to your changelog).
+
 
 Installation
 ------------
@@ -89,7 +115,8 @@ Usage
 parse
 ~~~~~
 
-Parses a changelog entry.
+Parses a changelog entry. If no ``--tag`` option is provided, then the latest
+changelog entry is parsed.
 
 ::
 
@@ -128,7 +155,8 @@ Parses a changelog entry.
 tag
 ~~~
 
-Creates an annotated git tag from a changelog entry.
+Creates an annotated git tag from a changelog entry. If no ``--tag`` option
+is provided, then the latest changelog entry is parsed and tagged.
 
 ::
 
