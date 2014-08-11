@@ -5,14 +5,19 @@
 # Author:  Michael Dowling <https://github.com/mtdowling>
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
 # URL:     https://github.com/mtdowling/chag
-# Version: 0.0.3
+
+chag_version() {
+  echo "chag 0.0.3"
+}
 
 chag_usage() {
+  chag_version
   cat <<EOT
 Usage: chag [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  --help  Displays this message.
+  --help     Displays this message.
+  --version  Displays the version number.
 
 Commands:
   parse
@@ -103,7 +108,11 @@ declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN= FORCE= ADDV=
 chag_main() {
   # Show help if no options or arguments are provided
   [ $# -eq 0 ] && set -- --help
+
+  # Showing help or the version should exit immediately
   [ "$1" == '--help' ] && chag_usage && exit 0
+  [ "$1" == '--version' ] && chag_version && exit 0
+
   COMMAND="$1"
   shift
 
@@ -138,7 +147,7 @@ parse_options() {
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
       --add-v) ADDV=1 ;;
-      --*) die "ERROR: Unexpected option: $opt" ;;
+      --*) die "ERROR: Unknown option '$opt'" ;;
       *) FILENAME=$opt; break ;;
     esac
   done
@@ -211,7 +220,7 @@ chag_parse() {
 # Creates an annotated git tag based on a changelog entry
 chag_tag() {
   data="$(chag_parse --tag $TAG $FILENAME 2>&1)"
-  [ "$?" -eq 1 ] && die $data
+  [ "$?" -eq 1 ] && die "Failed to parse $TAG from $FILENAME"
 
   # Split the result into individual pieces
   tag=$(echo $data | cut -d ' ' -f 1)
