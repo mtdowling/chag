@@ -34,7 +34,15 @@ delete_changelog() {
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
-@test "parse can parse that last changelog tag specific tag" {
+@test "parse ensures the tag exists" {
+  setup_changelog
+  run ./chag parse --tag 9.9.9 $BATS_TMPDIR/test-changelog
+  delete_changelog
+  [ $status -eq 1 ]
+  [ $(expr "${lines[0]}" : "Tag 9.9.9 not found") -ne 0 ]
+}
+
+@test "parse can parse a specific tag" {
   run ./chag parse --tag 0.0.1 CHANGELOG.rst
   [ $status -eq 0 ]
   # The filename is randomly generated, so just check for "/"
@@ -58,12 +66,4 @@ delete_changelog() {
   [ -f "$file" ]
   [ $(cat "$file") == '* Correcting ``--debug`` description.' ]
   rm "$file"
-}
-
-@test "parse ensures the tag exists" {
-  setup_changelog
-  run ./chag parse --tag 9.9.9 $BATS_TMPDIR/test-changelog
-  delete_changelog
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Tag 9.9.9 not found") -ne 0 ]
 }

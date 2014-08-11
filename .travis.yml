@@ -4,6 +4,8 @@ before_install:
   - sudo add-apt-repository ppa:duggan/bats --yes
   - sudo apt-get update -qq
   - sudo apt-get install -qq bats
+  - git config --global user.email "you@example.com"
+  - git config --global user.name "Your Name"
 
 script:
   - make test

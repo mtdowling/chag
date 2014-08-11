@@ -42,7 +42,7 @@ Arguments:
 Description:
   Parses a changelog entry from a changelog file. A changelog
   file consists of various release entries, each designated by a line
-  that matches the following pattern: \d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)
+  that matches the following pattern: '\d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)'
   After each release entry heading, are two lines of text that are
   disregarded, followed by n number of lines of the changelog entry
   content. An entry is parsed until the next heading or EOF.
@@ -162,7 +162,7 @@ parse_options() {
 
 # exits with an error message
 die() {
-  echo "$1"
+  echo "$@" 1>&2;
   exit 1
 }
 
@@ -173,17 +173,17 @@ debug() {
 
 # Parses a changelog and displays changelog information
 chag_parse() {
-  local pattern heading='^\d+\.\d+\.\d+ \(\d{4}\-\d{2}\-\d{2}\)$'
+  local heading='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
+  local pattern_end='\([[:digit:]]{4}\-[[:digit:]]{2}\-[[:digit:]]{2}\)$'
+  local pattern+=" $pattern_end"
 
   # The regex patterns depends on if we are getting the latest or a version
   if [ "$TAG" != "latest" ]; then
-    pattern="^$TAG \(\d{4}\-\d{2}\-\d{2}\)\$"
-  else
-    pattern=$heading
+    pattern="^$TAG $pattern_end"
   fi
 
   # Find the tag pattern
-  local match=$(grep -n -E "$pattern" $FILENAME | head -n1)
+  local match=$(grep -n -E -e "$pattern" $FILENAME | head -n1)
   [ "$match" == "" ] && die "Tag $TAG not found"
 
   # Parse the match: 0:0.0.0 (0000-00-00)

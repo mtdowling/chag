@@ -22,6 +22,10 @@ chag expects changelog files to match the following template:
    consume the content until the heading regular expression matches the
    next entry or the end of the file.
 
+.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
+   :target: https://travis-ci.org/mtdowling/chag
+   :alt: Build status
+
 Example Changelog
 -----------------
 
@@ -81,7 +85,7 @@ Parses a changelog entry.
     Description:
       Parses a changelog entry from a changelog file. A changelog
       file consists of various release entries, each designated by a line
-      that matches the following pattern: \d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)
+      that matches the following pattern: '\d+\.\d+\.\d+ \(\d{4}\-\d{2}\d{2}\)'
       After each release entry heading, are two lines of text that are
       disregarded, followed by n number of lines of the changelog entry
       content. An entry is parsed until the next heading or EOF.
