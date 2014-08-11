@@ -111,6 +111,7 @@ Creates an annotated git tag from a changelog entry.
     Options:
       --tag       Optional tag to parse. If no value is provided, then
                   the latest tag will be parsed. Defaults to "latest".
+      --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
       --message   Optional message to prepend to the annotated tag description.
                   Pass "{date}" to automatically fill in the date of the release
                   as the description title.

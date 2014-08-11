@@ -65,6 +65,7 @@ Usage: chag tag [OPTIONS] FILENAME
 Options:
   --tag       Optional tag to parse. If no value is provided, then
               the latest tag will be parsed. Defaults to "latest".
+  --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
   --message   Optional message to prepend to the annotated tag description.
               Pass "{date}" to automatically fill in the date of the release
               as the description title.
@@ -96,7 +97,7 @@ EOT
 }
 
 # Clear out the variables used in the script
-declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN= FORCE=
+declare COMMAND= FILENAME= TAG= MESSAGE= OUTPUT= SIGN= FORCE= ADDV=
 
 # Extracts options and arguments, validates, and calls a subcommand
 chag_main() {
@@ -136,6 +137,7 @@ parse_options() {
       --debug) DEBUG=1 ;;
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
+      --add-v) ADDV=1 ;;
       --*) die "ERROR: Unexpected option: $opt" ;;
       *) FILENAME=$opt; break ;;
     esac
@@ -215,6 +217,11 @@ chag_tag() {
   tag=$(echo $data | cut -d ' ' -f 1)
   date=$(echo $data | cut -d ' ' -f 2)
   tmp=$(echo $data | cut -d ' ' -f 3)
+
+  # Prepend a "v" if required
+  if [ ! -z "$ADDV" ]; then
+    tag="v$tag"
+  fi
 
   debug "Parsed the $tag changelog entry from $FILENAME:"
   debug "  tag: $tag, date: $date, tmpfile: $tmp"
