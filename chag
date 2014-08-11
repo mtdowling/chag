@@ -219,8 +219,9 @@ chag_parse() {
 
 # Creates an annotated git tag based on a changelog entry
 chag_tag() {
-  data="$(chag_parse --tag $TAG $FILENAME 2>&1)"
-  [ "$?" -eq 1 ] && die "Failed to parse $TAG from $FILENAME"
+  data="$(chag_parse --tag $TAG $FILENAME 2>&1)" || {
+    die "Failed to parse $TAG from $FILENAME"
+  }
 
   # Split the result into individual pieces
   tag=$(echo $data | cut -d ' ' -f 1)
@@ -228,9 +229,7 @@ chag_tag() {
   tmp=$(echo $data | cut -d ' ' -f 3)
 
   # Prepend a "v" if required
-  if [ ! -z "$ADDV" ]; then
-    tag="v$tag"
-  fi
+  [ ! -z "$ADDV" ] && tag="v$tag"
 
   debug "Parsed the $tag changelog entry from $FILENAME:"
   debug "  tag: $tag, date: $date, tmpfile: $tmp"
@@ -245,13 +244,11 @@ chag_tag() {
   # Run the command and get the exit code
   local cmd="git tag $SIGN $FORCE -a -F $tmp $tag"
   debug "Running $cmd"
-  $cmd
-  local success="$?"
 
-  if [ $success -ne 0 ]; then
+  $cmd || {
     rm $tmp || echo "Temp file not found: $tmp"
     die "[FAILURE] Failed tagging $tag: Error code $success"
-  fi
+  }
 
   echo "[SUCCESS] Tagged the $tag release"
   debug "Tagged $tag with the following annotation:\n\n$(cat $tmp)"
