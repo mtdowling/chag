@@ -2,6 +2,14 @@
 CHANGELOG
 =========
 
+0.0.4 (2014-09-11)
+------------------
+
+* Using POSIX style regular expression to work with GNU grep.
+* Added a ``--version`` option.
+* Writing errors to STDERR.
+* Added a bats test suite.
+
 0.0.3 (2014-09-10)
 ------------------
 
