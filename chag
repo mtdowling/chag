@@ -217,7 +217,7 @@ check_tag_argument() {
 
 # Ensure FILENAME is set and can be found.
 check_filename_argument() {
-  FILENAME=${opt:?"$COMMAND requires a FILENAME"}
+  FILENAME=${1:?"$COMMAND requires a FILENAME"}
   [ -f "$FILENAME" ] || die "File not found: $FILENAME"
 }
 
@@ -238,7 +238,7 @@ parse_options() {
     esac
   done
 
-  check_filename_argument $@
+  check_filename_argument $opt
   check_tag_argument $@
 }
 
@@ -306,6 +306,7 @@ update() {
   local len=${#replacement}
   local border=$(printf "%${len}s" |tr " " "$REPEAT_STR")
   # We need to pipe to a temp file because we're reading from the CHANGELOG
+  # while simultaneously creating a new version.
   tmp=$(mktemp /tmp/changelog.XXXXXXXXXX) || die "Could not create tmp file"
 
   # Iterate over each line and replace them as needed
@@ -338,6 +339,7 @@ update() {
 
 list() {
   local pattern="^($HEADING_START) $HEADING_END"
+  # Find each line and strip out the trailing date
   grep -E -e "$pattern" $FILENAME | sed -E 's/\ .+$//'
 }
 
