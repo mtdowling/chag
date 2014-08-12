@@ -44,7 +44,8 @@ chag workflow is:
    next tag and CHANGELOG is the path to your changelog file. This command
    updates the "Next Release (TBD)" in place with the new version number and
    date.
-3. Run the ``tag`` command (e.g., ``chag tag CHANGLOG latest``) to create an
+3. Review the changes and commit them.
+4. Run the ``tag`` command (e.g., ``chag tag CHANGLOG latest``) to create an
    annotated tag for the latest version based on the changelog you built up
    while developing the next release.
 
