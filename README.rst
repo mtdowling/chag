@@ -5,15 +5,16 @@ chag
 *chag* stands for "changelog tag". It allows you to use your project's
 changelog as the canonical source of change data.
 
-You can use chag to:
+What does it do?
+----------------
 
-1. Create annotated git tags based on a changelog entry.
-2. Parse the contents of a specific changelog changelog entry by tag name.
-3. List all available tags in a changelog.
-4. Get the last available tag number in a changelog.
+1. Parse the contents of a specific changelog entry by tag name.
+2. Create annotated git tags based on a changelog entry.
+3. List all available tag version numbers in a changelog.
+4. Get the tag number of the latest changelog entry in a changelog.
 
-Adding snippets of your changelog to annotated git tags provides the following
-benefits:
+Why use chag?
+-------------
 
 1. Your project's GitHub releases atom feed contains release notes that can be
    used to keep consumers of your project up to date. Take a look at
