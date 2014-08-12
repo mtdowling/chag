@@ -8,6 +8,15 @@ setup_changelog() {
   tail -9 CHANGELOG.rst > $CHNGFILE
 }
 
+# Creates a test fixure changelog that has a TBD entry
+setup_changelog_tbd() {
+  printf "Foo\n\n" > $CHNGFILE
+  printf "Next Release (TBD)\n" >> $CHNGFILE
+  echo "------------------" >> $CHNGFILE
+  printf "\nHello!\n\n" >> $CHNGFILE
+  tail -9 CHANGELOG.rst >> $CHNGFILE
+}
+
 # Deletes the test fixture changelog
 delete_changelog() {
   rm $CHNGFILE

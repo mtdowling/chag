@@ -16,6 +16,8 @@ What does it do?
 2. Create annotated git tags based on a changelog entry.
 3. List all available tag version numbers in a changelog.
 4. Get the tag number of the latest changelog entry in a changelog.
+5. In-place update a TBD changelog entry with an actual version number
+   and date.
 
 Why use chag?
 -------------
@@ -27,16 +29,24 @@ Why use chag?
 2. If you use `Travis CI's deploy feature <http://docs.travis-ci.com/user/deployment/releases/>`_
    to automatically deploy to GitHub eleases, then the contents of your GitHub
    releases will mirror the contents of the corresponding changelog entry.
+3. Helps to ensure your changelog is always up to date.
 
 Workflow
 --------
 
-Using "chag tag" requires the following workflow:
+While you can use any of the commands of chag as needed, the recommended
+chag workflow is:
 
-1. Create a changelog entry in your project's CHANGELOG file that contains the
-   version to be released and information about the release.
-2. Commit the CHANGELOG changes.
-3. Run ``chag tag CHANGELOG`` (where CHANGELOG is the path to your changelog).
+1. As you develop changes, add to your changelog file under a changelog
+   section titled ``Next Release (TBD)``.
+2. When your work is ready to be released, execute
+   ``chag update --date 1 CHANGELOG X.Y.Z`` where X.Y.Z is the version of the
+   next tag and CHANGELOG is the path to your changelog file. This command
+   updates the "Next Release (TBD)" in place with the new version number and
+   date.
+3. Run the ``tag`` command (e.g., ``chag tag CHANGLOG latest``) to create an
+   annotated tag for the latest version based on the changelog you built up
+   while developing the next release.
 
 Installation
 ------------
@@ -83,6 +93,12 @@ Example Changelog
     =========
 
     Any text can occur before the actual release not entries are found.
+
+    Next Release (TBD)
+    ------------------
+
+    * I've been building up this release while developing.
+    * This helps to ensure the changelog is up to date.
 
     1.0.1 (2014-09-10)
     ------------------
@@ -246,3 +262,29 @@ List the changelog tags available in a CHANGELOG.
 
     Examples:
       ./chag list /path/to/CHANGELOG.md
+
+update
+~~~~~~
+
+Replaces a "Next Release (TBD)" changelog entry with an actual heading for
+the next version of your project.
+
+::
+
+    Usage: chag update [OPTIONS] FILENAME TAG
+
+    Options:
+      --help    Displays this message.
+      --date    Provide an optional date to append to the updated line. For
+                example, "2014-08-11". Pass "1" to use the current date formatted
+                as "YYYY-MM-DD".
+      --repeat  Character used when repeating a border under the title.
+                Defaults to "-".
+
+    Arguments:
+      FILENAME  Path to the changelog to update.
+      TAG       Tag to set in the place of the "Next Release" string.
+
+    Description:
+      Scans for the "Next Release (TBD)" string, and replaces it with the
+      given TAG argument.

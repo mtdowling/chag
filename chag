@@ -9,7 +9,8 @@
 set -e
 
 # Clear out the variables used in the script
-unset COMMAND FILENAME TAG SIGN FORCE ADDV
+unset COMMAND FILENAME TAG SIGN FORCE ADDV DATE_STR
+REPEAT_STR="-"
 
 # Tag heading regular expressions
 HEADING_START='[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
@@ -144,6 +145,30 @@ EOT
   exit 0
 }
 
+update_usage() {
+  cat <<EOT
+Usage: chag update [OPTIONS] FILENAME TAG
+
+Options:
+  --help    Displays this message.
+  --date    Provide an optional date to append to the updated line. For
+            example, "2014-08-11". Pass "1" to use the current date formatted
+            as "YYYY-MM-DD".
+  --repeat  Character used when repeating a border under the title.
+            Defaults to "-".
+
+Arguments:
+  FILENAME  Path to the changelog to update.
+  TAG       Tag to set in the place of the "Next Release" string.
+
+Description:
+  Scans for the "Next Release" string, and replaces it with the given TAG
+  argument.
+
+EOT
+  exit 0
+}
+
 # exits with an error message
 die() {
   echo "$@" 1>&2
@@ -166,7 +191,7 @@ main() {
   shift
 
   case "$COMMAND" in
-    parse|tag|latest|list)
+    parse|tag|latest|list|update)
       # Each command has a "command"_usage function
       [ "$1" == "--help" ] && "${COMMAND}_usage"
       parse_options $@
@@ -182,7 +207,7 @@ main() {
 # Ensure the TAG argument is set for specific commands.
 check_tag_argument() {
   case "$COMMAND" in
-    parse|tag)
+    parse|tag|update)
       TAG=${1:?"$COMMAND requires a TAG"}
       if [ "$TAG" == "latest" ]; then
         TAG=$(latest "$FILENAME")
@@ -206,6 +231,8 @@ parse_options() {
       --add-v) ADDV=1 ;;
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
+      --date) DATE_STR=${1:?"--date cannot be empty"}; shift;;
+      --repeat) REPEAT_STR=${1:?"--repeat cannot be empty"}; shift;;
       --*) die "Unknown option '$opt'" ;;
       *) break ;;
     esac
@@ -264,6 +291,47 @@ tag() {
   (list | grep -q $TAG) || die "[FAILURE] $TAG not found in $FILENAME"
   ($parse_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
+}
+
+update() {
+  local replacement="$TAG"
+
+  # Add the date string to the replacement string if needed.
+  if [ ! -z "$DATE_STR" ]; then
+    # Subsitute the current date when "1" is provided.
+    [ "$DATE_STR" != "1" ] || DATE_STR=$(date +%Y-%m-%d)
+    replacement+=" ($DATE_STR)"
+  fi
+
+  local len=${#replacement}
+  local border=$(printf "%${len}s" |tr " " "$REPEAT_STR")
+  # We need to pipe to a temp file because we're reading from the CHANGELOG
+  tmp=$(mktemp /tmp/changelog.XXXXXXXXXX) || die "Could not create tmp file"
+
+  # Iterate over each line and replace them as needed
+  local i=1 border_line=-1
+  while read text; do
+    if [ "$text" == 'Next Release (TBD)' ]; then
+      # Replace the TBD line
+      echo "$replacement"
+      border_line=$((i+1))
+    elif ((i==border_line)); then
+      # Replace the border line (TBD line + 1)
+      echo "$border"
+    else
+      echo "$text"
+    fi
+    ((i++))
+  done < $FILENAME > $tmp
+
+  # If the border line was not found, then the changelog was not updated.
+  if [ "$border_line" -eq -1 ]; then
+    rm "$tmp"
+    die "'Next Release (TBD)' not found in $FILENAME"
+  fi
+
+  mv "$tmp" "$FILENAME"
+  echo "[SUCCESS] Updated ${FILENAME}:$((border_line-1)) to '$replacement'"
 }
 
 list() {
