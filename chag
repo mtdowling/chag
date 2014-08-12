@@ -17,7 +17,7 @@ HEADING_START='[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
 HEADING_END='\([[:digit:]]{4}\-[[:digit:]]{2}\-[[:digit:]]{2}\)$'
 
 version() {
-  echo "chag 0.1.0"
+  echo "chag 0.2.0"
 }
 
 usage() {
