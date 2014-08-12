@@ -11,13 +11,13 @@ load test_helper
 @test "Invalid options fail" {
   run ./chag list --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown option") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
 @test "list requires a FILENAME" {
   run ./chag list
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "list requires a FILENAME") -ne 0 ]
+  [ $(expr "${lines[0]}" : ".* list requires a FILENAME") -ne 0 ]
 }
 
 @test "lists tag versions from changelog" {

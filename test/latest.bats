@@ -11,13 +11,13 @@ load test_helper
 @test "Invalid options fail" {
   run ./chag latest --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown option") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
 @test "latest requires a FILENAME" {
   run ./chag latest
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "latest requires a FILENAME") -ne 0 ]
+  [ $(expr "${lines[0]}" : ".* latest requires a FILENAME") -ne 0 ]
 }
 
 @test "latest shows latest tag" {

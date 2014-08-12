@@ -21,11 +21,11 @@
 @test "Invalid options fail" {
   run ./chag parse --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown option") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
 @test "Invalid commands fail" {
   run ./chag foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown command") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown command") -ne 0 ]
 }

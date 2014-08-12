@@ -11,13 +11,13 @@ load test_helper
 @test "Invalid options fail" {
   run ./chag parse --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown option") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
 @test "parse requires a FILENAME" {
   run ./chag parse
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "parse requires a FILENAME") -ne 0 ]
+  [ $(expr "${lines[0]}" : ".* parse requires a FILENAME") -ne 0 ]
 }
 
 @test "parse ensures FILENAME exists" {
@@ -30,7 +30,7 @@ load test_helper
   setup_changelog
   run ./chag parse $CHNGFILE
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "parse requires a TAG") -ne 0 ]
+  [ $(expr "${lines[0]}" : ".* parse requires a TAG") -ne 0 ]
   delete_changelog
 }
 

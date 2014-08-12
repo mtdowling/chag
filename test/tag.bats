@@ -13,13 +13,13 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 @test "Invalid options fail" {
   run ./chag tag --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "ERROR: Unknown option") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
 @test "tag requires a FILENAME" {
   run ./chag tag
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "tag requires a FILENAME") -ne 0 ]
+  [ $(expr "${lines[0]}" : ".* tag requires a FILENAME") -ne 0 ]
 }
 
 @test "tag ensures FILENAME exists" {
@@ -28,10 +28,16 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
+@test "tag requires a TAG" {
+  run ./chag tag CHANGELOG.rst
+  [ $status -eq 1 ]
+  [ $(expr "${lines[0]}" : ".* tag requires a TAG") -ne 0 ]
+}
+
 @test "tag ensures parse succeeds" {
   run ./chag tag CHANGELOG.rst 999.999.999
   [ $status -eq 1 ]
-  [ "${lines[0]}" == "Tag 999.999.999 not found in CHANGELOG.rst" ]
+  [ "${lines[0]}" == "[FAILURE] 999.999.999 not found in CHANGELOG.rst" ]
 }
 
 @test "Tags with annotation and specific tag" {

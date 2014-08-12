@@ -35,6 +35,7 @@ Commands:
   list       List all tags in a changelog file.
 
 EOT
+  exit 0
 }
 
 parse_usage() {
@@ -66,6 +67,7 @@ Examples:
   ./chag /path/to/CHANGELOG.md 2.0.0
 
 EOT
+  exit 0
 }
 
 tag_usage() {
@@ -98,6 +100,7 @@ Examples:
   ./chag tag -f CHANGELOG.rst 2.0.0
 
 EOT
+  exit 0
 }
 
 latest_usage() {
@@ -118,6 +121,7 @@ Examples:
   Outputs: 2.0.0
 
 EOT
+  exit 0
 }
 
 list_usage() {
@@ -137,6 +141,7 @@ Examples:
   ./chag list /path/to/CHANGELOG.md
 
 EOT
+  exit 0
 }
 
 # exits with an error message
@@ -147,41 +152,48 @@ die() {
 
 # Outputs debug information if DEBUG was passed
 debug() {
-  if [ ! -z "$DEBUG" ]; then
-    printf "$@\n" >&2
-  fi
+  [ -z "$DEBUG" ] || printf "$@\n" >&2
 }
 
 # Extracts options and arguments, validates, and calls a subcommand
 main() {
   # Show help if no options or arguments are provided
   [ $# -eq 0 ] && set -- --help
-
-  # Showing help or the version should exit immediately
-  [ "$1" == '--help' ] && usage && exit 0
+  [ "$1" == '--help' ] && usage
   [ "$1" == '--version' ] && version && exit 0
 
   COMMAND="$1"
   shift
 
-  # Call the appropriate command or display the command's help message
   case "$COMMAND" in
     parse|tag|latest|list)
       # Each command has a "command"_usage function
-      if [ "$1" == "--help" ]; then
-        help_cmd=$COMMAND
-        help_cmd+="_usage"
-        $help_cmd
-        exit 0
-      fi
+      [ "$1" == "--help" ] && "${COMMAND}_usage"
       parse_options $@
       $COMMAND
       ;;
     *)
-      die "ERROR: Unknown command '$COMMAND'." \
+      die "Unknown command '$COMMAND'." \
           "Available commands: parse|tag|latest|list"
       ;;
   esac
+}
+
+# Ensure the TAG argument is set for specific commands.
+check_tag_argument() {
+  case "$COMMAND" in
+    parse|tag)
+      TAG=${1:?"$COMMAND requires a TAG"}
+      if [ "$TAG" == "latest" ]; then
+        TAG=$(latest "$FILENAME")
+      fi
+  esac
+}
+
+# Ensure FILENAME is set and can be found.
+check_filename_argument() {
+  FILENAME=${opt:?"$COMMAND requires a FILENAME"}
+  [ -f "$FILENAME" ] || die "File not found: $FILENAME"
 }
 
 # Parses the provided options, FILENAME, and TAG
@@ -191,51 +203,31 @@ parse_options() {
     shift
     case "$opt" in
       --debug) DEBUG=1 ;;
+      --add-v) ADDV=1 ;;
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
-      --add-v) ADDV=1 ;;
-      --*) die "ERROR: Unknown option '$opt'" ;;
-      *) FILENAME=$opt; break ;;
+      --*) die "Unknown option '$opt'" ;;
+      *) break ;;
     esac
   done
 
-  if [ "$FILENAME" == "" ]; then
-    die "$COMMAND requires a FILENAME argument"
-  fi
-
-  if [ ! -f "$FILENAME" ]; then
-    die "File not found: $FILENAME"
-  fi
-
-  case "$COMMAND" in
-    parse|tag)
-      TAG="$1"
-      # Handle the "latest" value
-      if [ "$TAG" == "latest" ]; then
-        TAG=$(latest "$FILENAME")
-      elif [ -z "$TAG" ]; then
-        die "$COMMAND requires a TAG argument"
-      fi
-      ;;
-  esac
+  check_filename_argument $@
+  check_tag_argument $@
 }
 
-# Parses a changelog and displays changelog information
 parse() {
   # Find the tag pattern
   local match=$(grep -n -E -e "^$TAG $HEADING_END" $FILENAME | head -n1)
   [ "$match" == "" ] && die "Tag $TAG not found in $FILENAME"
-
-  # Parse the match: 0:0.0.0 (0000-00-00)
+  # Parse the match: "n:TAG (DATE)"
   local found_line=$(echo "$match" | cut -d ':' -f 1)
-
   # First line in the file of the changelog
   local start_line=$(($found_line + 2))
   # Find the length of the section
-  local length=$(tail -n +$start_line "$FILENAME" | \
-                 grep -n -E "^$HEADING_START $HEADING_END" | \
-                 head -n1 | \
-                 cut -d ':' -f 1)
+  local length=$(tail -n +$start_line "$FILENAME" \
+                 | grep -n -E "^$HEADING_START $HEADING_END" \
+                 | head -n1 \
+                 | cut -d ':' -f 1)
   # Remove the extra lines
   length=$(($length - 3))
 
@@ -250,27 +242,27 @@ parse() {
   fi
 }
 
-# Creates an annotated git tag based on a changelog entry
 tag() {
-  local parse_cmd="parse $FILENAME $TAG" real_tag="$TAG"
+  local parse_cmd="parse $FILENAME $TAG"
 
-  # Prepend a "v" if required
-  if [ ! -z "$ADDV" ]; then
-    real_tag="v$TAG"
+  # Prepend a "v" if required or just use the provided TAG argument.
+  if [ -z "$ADDV" ]; then
+    local real_tag="$TAG"
+  else
+    local real_tag="v$TAG"
   fi
 
   # Run the command and get the exit code
   local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
+
   if [ ! -z "$DEBUG" ]; then
     debug "Tagging $real_tag with the following annotation:\n"
     debug "===[ BEGIN ]===\n$($parse_cmd)\n===[  END  ]===\n"
     debug "Running git command: $cmd"
   fi
 
-  ($parse_cmd | $cmd) || {
-    die "[FAILURE] Failed tagging $tag: Error code $success"
-  }
-
+  (list | grep -q $TAG) || die "[FAILURE] $TAG not found in $FILENAME"
+  ($parse_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
