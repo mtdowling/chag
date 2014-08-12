@@ -1,5 +1,5 @@
 tag:
-	./chag tag --sign --debug CHANGELOG.rst
+	./chag tag --sign --debug CHANGELOG.rst latest
 
 test:
 	bats test/

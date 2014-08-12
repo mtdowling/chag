@@ -8,7 +8,9 @@ changelog as the canonical source of change data.
 You can use chag to:
 
 1. Create annotated git tags based on a changelog entry.
-2. Parse a changelog into a tag name, date, and description.
+2. Parse the contents of a specific changelog changelog entry by tag name.
+3. List all available tags in a changelog.
+4. Get the last available tag number in a changelog.
 
 Adding snippets of your changelog to annotated git tags provides the following
 benefits:
@@ -35,11 +37,10 @@ Using "chag tag" requires the following workflow:
 2. Commit the CHANGELOG changes.
 3. Run ``chag tag CHANGELOG`` (where CHANGELOG is the path to your changelog).
 
-
 Installation
 ------------
 
-To install you could use the install script using cURL:
+You can install chag using cURL:
 
 ::
 
@@ -106,11 +107,14 @@ Usage
     Usage: chag [OPTIONS] COMMAND [ARGS]...
 
     Options:
-      --help  Displays this message.
+      --help     Displays this message.
+      --version  Displays the version number.
 
     Commands:
-      parse
-      tag
+      parse      Get the contents of a specific changelog entry.
+      tag        Create an annotated git tag based on a changelog entry.
+      latest     Get the latest tag in a changelog.
+      list       List all tags in a changelog file.
 
 parse
 ~~~~~
@@ -120,16 +124,16 @@ changelog entry is parsed.
 
 ::
 
-    Usage: chag parse [OPTIONS] FILENAME
+    Usage: chag parse [OPTIONS] FILENAME TAG
 
     Options:
-      --tag      Optional tag to parse. If no value is provided, then
-                 the latest tag will be parsed.
       --debug    Output debug information while executing.
       --help     Displays this message.
 
     Arguments:
       FILENAME   Path to the changelog file to parse.
+      TAG        The tag to parse from the changelog. Pass the string "latest"
+                 to parse the latest changelog entry.
 
     Description:
       Parses a changelog entry from a changelog file. A changelog
@@ -140,17 +144,11 @@ changelog entry is parsed.
       content. An entry is parsed until the next heading or EOF.
 
     Output:
-      Outputs the tag of the corresponding entry, the date of the
-      entry, and the path to a file on disk containing the contents
-      of the entry, all separated by a single space.
+      Writes the contents of the matching changelog entry to STDOUT.
 
     Examples:
 
-      ./chag /path/to/CHANGELOG.md
-      Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
-
-      ./chag --tag 1.0.1 /path/to/CHANGELOG.md
-      Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+      ./chag /path/to/CHANGELOG.md 2.0.0
 
 tag
 ~~~
@@ -160,11 +158,9 @@ is provided, then the latest changelog entry is parsed and tagged.
 
 ::
 
-    Usage: chag tag [OPTIONS] FILENAME
+    Usage: chag tag [OPTIONS] FILENAME TAG
 
     Options:
-      --tag       Optional tag to parse. If no value is provided, then
-                  the latest tag will be parsed. Defaults to "latest".
       --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
       --message   Optional message to prepend to the annotated tag description.
                   Pass "{date}" to automatically fill in the date of the release
@@ -176,22 +172,23 @@ is provided, then the latest changelog entry is parsed and tagged.
       --help      Displays this message.
 
     Arguments:
-      FILENAME   Path to the changelog to parse
+      FILENAME    Path to the changelog to parse.
+      TAG         Tag to parse from the changelog file. Pass the string "latest"
+                  to parse and tag the latest changelog entry.
 
     Description:
-      Parses a changelog entry for the given tag (or latest tag) and creates an
-      annotated git tag based on the changelog entry.
+      Parses a changelog entry for the given tag and creates an annotated git tag
+      based on the changelog entry.
 
     Examples:
-      ./chag tag /path/to/CHANGELOG.md
-      ./chag tag --debug CHANGELOG.rst
-      ./chag tag --tag 4.1.0 CHANGELOG.md
-      ./chag tag --sign CHANGELOG.rst
-      ./chag tag -s CHANGELOG.rst
-      ./chag tag --force CHANGELOG.rst
-      ./chag tag -f CHANGELOG.rst
-      ./chag tag --message "{date}" CHANGELOG.rst
-      ./chag tag --message "Release code name" CHANGELOG.rst
+      ./chag tag /path/to/CHANGELOG.md 2.0.0
+      ./chag tag --debug CHANGELOG.rst 2.0.0
+      ./chag tag --sign CHANGELOG.rst 2.0.0
+      ./chag tag -s CHANGELOG.rst 1.0.0
+      ./chag tag --force CHANGELOG.rst 2.0.0
+      ./chag tag -f CHANGELOG.rst 2.0.0
+      ./chag tag --message "{date}" CHANGELOG.rst 2.0.1
+      ./chag tag --message "Release code name" CHANGELOG.rst 0.0.4
 
 Executing ``chag tag`` will have output similar to the following:
 
@@ -205,3 +202,46 @@ Executing ``chag tag`` will have output similar to the following:
     Tagged 0.0.1 with the following annotation:
 
     Initial release.
+
+latest
+~~~~~~
+
+Get the latest changelog entry tag from a CHANGELOG.
+
+::
+
+    Usage: chag latest [OPTIONS] FILENAME
+
+    Options:
+      --help    Displays this message.
+
+    Arguments:
+      FILENAME  Path to the changelog to parse.
+
+    Description:
+      Get the latest tag in a changelog.
+
+    Examples:
+      ./chag latest /path/to/CHANGELOG.md
+      Outputs: 2.0.0
+
+list
+~~~~
+
+List the changelog tags available in a CHANGELOG.
+
+::
+
+    Usage: chag list [OPTIONS] FILENAME
+
+    Options:
+      --help    Displays this message.
+
+    Arguments:
+      FILENAME  Path to the changelog to parse.
+
+    Description:
+      Lists all of the tag numbers in a changelog file, separated by new lines.
+
+    Examples:
+      ./chag list /path/to/CHANGELOG.md

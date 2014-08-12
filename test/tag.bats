@@ -1,19 +1,6 @@
 #!/usr/bin/env bats
 
-# Deletes the test fixture repository
-delete_repo() {
-  rm -rf $BATS_TMPDIR/chag-test
-}
-
-# Creates a test fixture repository
-setup_repo() {
-  delete_repo
-  # Create new git repo
-  mkdir -p $BATS_TMPDIR/chag-test
-  tail -9 CHANGELOG.rst > $BATS_TMPDIR/chag-test/CHANGELOG.rst
-  cd $BATS_TMPDIR/chag-test
-  git init && git add -A && git commit -m 'Initial commit'
-}
+load test_helper
 
 chagcmd="$BATS_TEST_DIRNAME/../chag"
 
@@ -36,64 +23,54 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 }
 
 @test "tag ensures FILENAME exists" {
-  run ./chag tag /path/to/does/not/exist
+  run ./chag tag /path/to/does/not/exist 0.0.1
   [ $status -eq 1 ]
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
 @test "tag ensures parse succeeds" {
-  run ./chag tag --tag 999.999.999 CHANGELOG.rst
+
+  run ./chag tag CHANGELOG.rst 999.999.999
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Failed to parse") -ne 0 ]
+  [ "${lines[0]}" == "Tag 999.999.999 not found in CHANGELOG.rst" ]
 }
 
 @test "Tags with annotation and specific tag" {
   setup_repo
-  run $chagcmd tag --add-v CHANGELOG.rst
+  run $chagcmd tag --add-v CHANGELOG.rst 0.0.1
   [ $status -eq 0 ]
-  [ "${lines[0]}" == '[SUCCESS] Tagged the v0.0.2 release' ]
-  run git tag -l -n1 v0.0.2
+  [ "${lines[0]}" == '[SUCCESS] Tagged v0.0.1' ]
+  run git tag -l -n1 v0.0.1
   cd -
   [ $status -eq 0 ]
-  [ "${lines[0]}" == 'v0.0.2          * Correcting ``--debug`` description.' ]
+  [ "${lines[0]}" == 'v0.0.1          * Initial release.' ]
   delete_repo
 }
 
 @test "Tags with annotation and latest tag" {
   setup_repo
-  run $chagcmd tag --debug --tag 0.0.1 CHANGELOG.rst
+  run $chagcmd tag --debug CHANGELOG.rst latest
   [ $status -eq 0 ]
-  [ "${lines[0]}" == 'Parsed the 0.0.1 changelog entry from CHANGELOG.rst:' ]
-  [ $(expr "${lines[1]}" : '  tag: 0.0.1, date: 2014-08-10, tmpfile: *') -ne 0 ]
-  [ $(expr "${lines[2]}" : 'Running git tag   -a -F *') -ne 0 ]
-  [ "${lines[3]}" == '[SUCCESS] Tagged the 0.0.1 release' ]
-  run git tag -l -n1 0.0.1
+  [ "${lines[0]}" == 'Tagging 0.0.2 with the following annotation:' ]
+  [ "${lines[1]}" == '===[ BEGIN ]===' ]
+  [ "${lines[2]}" == '* Correcting ``--debug`` description.' ]
+  [ "${lines[3]}" == '===[  END  ]===' ]
+  [ "${lines[4]}" == 'Running git command: git tag   -a -F - 0.0.2' ]
+  [ "${lines[5]}" == '[SUCCESS] Tagged 0.0.2' ]
+  run git tag -l -n1 0.0.2
   cd -
   [ $status -eq 0 ]
-  [ "${lines[0]}" == '0.0.1           * Initial release.' ]
+  [ "${lines[0]}" == '0.0.2           * Correcting ``--debug`` description.' ]
   delete_repo
 }
 
 @test "Can force a tag" {
   setup_repo
-  run $chagcmd tag CHANGELOG.rst
+  run $chagcmd tag CHANGELOG.rst 0.0.2
   [ $status -eq 0 ]
-  run $chagcmd tag --force CHANGELOG.rst
+  run $chagcmd tag --force CHANGELOG.rst 0.0.2
   [ $status -eq 0 ]
-  [ "${lines[0]}" == '[SUCCESS] Tagged the 0.0.2 release' ]
-  cd -
-  delete_repo
-}
-
-@test "Can prepend a message to a tag" {
-  setup_repo
-  run $chagcmd tag --message 'Testing' CHANGELOG.rst
-  [ $status -eq 0 ]
-  [ "${lines[0]}" == '[SUCCESS] Tagged the 0.0.2 release' ]
-  run git tag -l -n1 0.0.2
-  cd -
-  [ $status -eq 0 ]
-  [ "${lines[0]}" == '0.0.2           Testing' ]
+  [ "${lines[0]}" == '[SUCCESS] Tagged 0.0.2' ]
   cd -
   delete_repo
 }

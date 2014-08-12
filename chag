@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Create annotated git tags from a changelog entry.
+# Parses changelog entries / create annotated git tags from a changelog entry.
 #
 # Author:  Michael Dowling <https://github.com/mtdowling>
 # License: MIT <https://github.com/mtdowling/chag/blob/master/LICENSE>
@@ -9,7 +9,11 @@
 set -e
 
 # Clear out the variables used in the script
-unset COMMAND FILENAME TAG MESSAGE OUTPUT SIGN FORCE ADDV
+unset COMMAND FILENAME TAG SIGN FORCE ADDV
+
+# Tag heading regular expressions
+HEADING_START='[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
+HEADING_END='\([[:digit:]]{4}\-[[:digit:]]{2}\-[[:digit:]]{2}\)$'
 
 version() {
   echo "chag 0.1.0"
@@ -25,24 +29,26 @@ Options:
   --version  Displays the version number.
 
 Commands:
-  parse
-  tag
+  parse      Get the contents of a specific changelog entry.
+  tag        Create an annotated git tag based on a changelog entry.
+  latest     Get the latest tag in a changelog.
+  list       List all tags in a changelog file.
 
 EOT
 }
 
 parse_usage() {
   cat <<EOT
-Usage: chag parse [OPTIONS] FILENAME
+Usage: chag parse [OPTIONS] FILENAME TAG
 
 Options:
-  --tag      Optional tag to parse. If no value is provided, then
-             the latest tag will be parsed.
   --debug    Output debug information while executing.
   --help     Displays this message.
 
 Arguments:
   FILENAME   Path to the changelog file to parse.
+  TAG        The tag to parse from the changelog. Pass the string "latest"
+             to parse the latest changelog entry.
 
 Description:
   Parses a changelog entry from a changelog file. A changelog
@@ -53,32 +59,21 @@ Description:
   content. An entry is parsed until the next heading or EOF.
 
 Output:
-  Outputs the tag of the corresponding entry, the date of the
-  entry, and the path to a file on disk containing the contents
-  of the entry, all separated by a single space.
+  Writes the contents of the matching changelog entry to STDOUT.
 
 Examples:
 
-  ./chag /path/to/CHANGELOG.md
-  Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
-
-  ./chag --tag 1.0.1 /path/to/CHANGELOG.md
-  Outputs: 1.0.1 2014-12-25 /tmp/1.0.1-XXXX
+  ./chag /path/to/CHANGELOG.md 2.0.0
 
 EOT
 }
 
 tag_usage() {
   cat <<EOT
-Usage: chag tag [OPTIONS] FILENAME
+Usage: chag tag [OPTIONS] FILENAME TAG
 
 Options:
-  --tag       Optional tag to parse. If no value is provided, then
-              the latest tag will be parsed. Defaults to "latest".
   --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
-  --message   Optional message to prepend to the annotated tag description.
-              Pass "{date}" to automatically fill in the date of the release
-              as the description title.
   --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
               key.
   --force|-f  Delete an existing tag if present.
@@ -86,22 +81,60 @@ Options:
   --help      Displays this message.
 
 Arguments:
-  FILENAME   Path to the changelog to parse
+  FILENAME    Path to the changelog to parse.
+  TAG         Tag to parse from the changelog file. Pass the string "latest"
+              to parse and tag the latest changelog entry.
 
 Description:
-  Parses a changelog entry for the given tag (or latest tag) and creates an
-  annotated git tag based on the changelog entry.
+  Parses a changelog entry for the given tag and creates an annotated git tag
+  based on the changelog entry.
 
 Examples:
-  ./chag tag /path/to/CHANGELOG.md
-  ./chag tag --debug CHANGELOG.rst
-  ./chag tag --tag 4.1.0 CHANGELOG.md
-  ./chag tag --sign CHANGELOG.rst
-  ./chag tag -s CHANGELOG.rst
-  ./chag tag --force CHANGELOG.rst
-  ./chag tag -f CHANGELOG.rst
-  ./chag tag --message "{date}" CHANGELOG.rst
-  ./chag tag --message "Release code name" CHANGELOG.rst
+  ./chag tag /path/to/CHANGELOG.md 2.0.0
+  ./chag tag --debug CHANGELOG.rst 2.0.0
+  ./chag tag --sign CHANGELOG.rst 2.0.0
+  ./chag tag -s CHANGELOG.rst 1.0.0
+  ./chag tag --force CHANGELOG.rst 2.0.0
+  ./chag tag -f CHANGELOG.rst 2.0.0
+
+EOT
+}
+
+latest_usage() {
+  cat <<EOT
+Usage: chag latest [OPTIONS] FILENAME
+
+Options:
+  --help    Displays this message.
+
+Arguments:
+  FILENAME  Path to the changelog to parse.
+
+Description:
+  Get the latest tag in a changelog.
+
+Examples:
+  ./chag latest /path/to/CHANGELOG.md
+  Outputs: 2.0.0
+
+EOT
+}
+
+list_usage() {
+  cat <<EOT
+Usage: chag list [OPTIONS] FILENAME
+
+Options:
+  --help    Displays this message.
+
+Arguments:
+  FILENAME  Path to the changelog to parse.
+
+Description:
+  Lists all of the tag numbers in a changelog file, separated by new lines.
+
+Examples:
+  ./chag list /path/to/CHANGELOG.md
 
 EOT
 }
@@ -133,32 +166,30 @@ main() {
 
   # Call the appropriate command or display the command's help message
   case "$COMMAND" in
-    parse)
-      [ "$1" == "--help" ] && parse_usage && exit 0
+    parse|tag|latest|list)
+      # Each command has a "command"_usage function
+      if [ "$1" == "--help" ]; then
+        help_cmd=$COMMAND
+        help_cmd+="_usage"
+        $help_cmd
+        exit 0
+      fi
       parse_options $@
-      parse
-      ;;
-    tag)
-      [ "$1" == "--help" ] && tag_usage && exit 0
-      parse_options $@
-      tag
+      $COMMAND
       ;;
     *)
-      printf "ERROR: Unknown command '$COMMAND'.\n\n"
-      usage
-      exit 1
+      die "ERROR: Unknown command '$COMMAND'." \
+          "Available commands: parse|tag|latest|list"
       ;;
   esac
 }
 
-# Parses the provided options, gets FILENAME, and adds a default TAG
+# Parses the provided options, FILENAME, and TAG
 parse_options() {
   while [ $# -gt 0 ]; do
     opt="$1"
     shift
     case "$opt" in
-      --tag) TAG="$1"; shift ;;
-      --message) MESSAGE="$1"; shift ;;
       --debug) DEBUG=1 ;;
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
@@ -168,44 +199,41 @@ parse_options() {
     esac
   done
 
-  # Parse the FILENAME argument
-  [ "$FILENAME" == "" ] && die "$COMMAND requires a FILENAME argument";
-  [ ! -f "$FILENAME" ] && die "File not found: $FILENAME"
-
-  # If no TAG is supplied, then default to the "latest" tag.
-  if [ -z "$TAG" ]; then
-    TAG="latest"
+  if [ "$FILENAME" == "" ]; then
+    die "$COMMAND requires a FILENAME argument"
   fi
+
+  if [ ! -f "$FILENAME" ]; then
+    die "File not found: $FILENAME"
+  fi
+
+  case "$COMMAND" in
+    parse|tag)
+      TAG="$1"
+      # Handle the "latest" value
+      if [ "$TAG" == "latest" ]; then
+        TAG=$(latest "$FILENAME")
+      elif [ -z "$TAG" ]; then
+        die "$COMMAND requires a TAG argument"
+      fi
+      ;;
+  esac
 }
 
 # Parses a changelog and displays changelog information
 parse() {
-  local heading='^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+'
-  local pattern_end='\([[:digit:]]{4}\-[[:digit:]]{2}\-[[:digit:]]{2}\)$'
-  local pattern+=" $pattern_end"
-
-  # The regex patterns depends on if we are getting the latest or a version
-  if [ "$TAG" != "latest" ]; then
-    pattern="^$TAG $pattern_end"
-  fi
-
   # Find the tag pattern
-  local match=$(grep -n -E -e "$pattern" $FILENAME | head -n1)
-  [ "$match" == "" ] && die "Tag $TAG not found"
+  local match=$(grep -n -E -e "^$TAG $HEADING_END" $FILENAME | head -n1)
+  [ "$match" == "" ] && die "Tag $TAG not found in $FILENAME"
 
   # Parse the match: 0:0.0.0 (0000-00-00)
   local found_line=$(echo "$match" | cut -d ':' -f 1)
-  local lastpart=$(echo "$match" | cut -d ':' -f 2)
-  local found_tag=$(echo "$lastpart" | cut -d ' ' -f 1)
-  local mdate=$(echo "$lastpart" | cut -d ' ' -f 2)
-  local found_date=${mdate:1:10}
-  local tmpfile=$(mktemp -t "tag-$found_tag.XXXXXXXXXX")
 
   # First line in the file of the changelog
   local start_line=$(($found_line + 2))
   # Find the length of the section
   local length=$(tail -n +$start_line "$FILENAME" | \
-                 grep -n -E "$heading" | \
+                 grep -n -E "^$HEADING_START $HEADING_END" | \
                  head -n1 | \
                  cut -d ':' -f 1)
   # Remove the extra lines
@@ -214,56 +242,45 @@ parse() {
   if [ "$length" -gt 0 ]; then
     # This is NOT at the end of the file
     local headn=$(($length + $start_line))
-    cat $FILENAME | head -n $headn | tail -n $length > $tmpfile
+    cat $FILENAME | head -n $headn | tail -n $length
   else
     # This is at the end of the file
     local len=$(cat $FILENAME | wc -l)
-    cat $FILENAME | tail -n $(($len - $start_line)) > $tmpfile
+    cat $FILENAME | tail -n $(($len - $start_line))
   fi
-
-  echo $found_tag $found_date $tmpfile
 }
 
 # Creates an annotated git tag based on a changelog entry
 tag() {
-  data="$(parse --tag $TAG $FILENAME 2>&1)" || {
-    die "Failed to parse $TAG from $FILENAME"
-  }
-
-  # Split the result into individual pieces
-  tag=$(echo $data | cut -d ' ' -f 1)
-  date=$(echo $data | cut -d ' ' -f 2)
-  tmp=$(echo $data | cut -d ' ' -f 3)
+  local parse_cmd="parse $FILENAME $TAG" real_tag="$TAG"
 
   # Prepend a "v" if required
   if [ ! -z "$ADDV" ]; then
-    tag="v$tag"
-  fi
-
-  debug "Parsed the $tag changelog entry from $FILENAME:"
-  debug "  tag: $tag, date: $date, tmpfile: $tmp"
-
-  # Prepend to the title if necessary
-  if [ "$MESSAGE" != "" ]; then
-    # Use substitution for {date}
-    if [ "$MESSAGE" == '{date}' ]; then
-      MESSAGE="$date"
-    fi
-    printf "$MESSAGE\n\n" | cat - $tmp > /tmp/out && mv /tmp/out $tmp
+    real_tag="v$TAG"
   fi
 
   # Run the command and get the exit code
-  local cmd="git tag $SIGN $FORCE -a -F $tmp $tag"
-  debug "Running $cmd"
+  local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
+  if [ ! -z "$DEBUG" ]; then
+    debug "Tagging $real_tag with the following annotation:\n"
+    debug "===[ BEGIN ]===\n$($parse_cmd)\n===[  END  ]===\n"
+    debug "Running git command: $cmd"
+  fi
 
-  $cmd || {
-    rm $tmp || echo "Temp file not found: $tmp"
+  $parse_cmd | $cmd || {
     die "[FAILURE] Failed tagging $tag: Error code $success"
   }
 
-  echo "[SUCCESS] Tagged the $tag release"
-  debug "Tagged $tag with the following annotation:\n\n$(cat $tmp)"
-  rm $tmp || echo "Temp file not found: $tmp"
+  echo "[SUCCESS] Tagged $real_tag"
+}
+
+list() {
+  local pattern="^($HEADING_START) $HEADING_END"
+  grep -E -e "$pattern" $FILENAME | sed -E 's/\ .+$//'
+}
+
+latest() {
+  list | head -n1
 }
 
 main "$@"

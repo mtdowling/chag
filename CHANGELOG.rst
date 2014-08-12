@@ -2,7 +2,16 @@
 CHANGELOG
 =========
 
-0.1.0 (2015-08-11)
+0.2.0 (2014-08-11)
+------------------
+
+Adding new commands and changing how parsing works.
+
+* Made ``TAG`` a required argument for ``parse`` and ``tag``.
+* ``parse`` now only outputs the contents of the changelog entry to STDOUT.
+* Added ``list`` and ``latest`` commands.
+
+0.1.0 (2014-08-11)
 ------------------
 
 * Using ``set -e``

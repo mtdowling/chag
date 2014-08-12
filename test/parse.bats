@@ -1,14 +1,6 @@
 #!/usr/bin/env bats
 
-# Creates a test fixure changelog
-setup_changelog() {
-  tail -9 CHANGELOG.rst > $BATS_TMPDIR/test-changelog
-}
-
-# Deletes the test fixture changelog
-delete_changelog() {
-  rm $BATS_TMPDIR/test-changelog
-}
+load test_helper
 
 @test "--help prints parse help" {
   run ./chag parse --help
@@ -34,36 +26,34 @@ delete_changelog() {
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
+@test "parse requires a TAG" {
+  setup_changelog
+  run ./chag parse $CHNGFILE
+  [ $status -eq 1 ]
+  [ $(expr "${lines[0]}" : "parse requires a TAG") -ne 0 ]
+  delete_changelog
+}
+
 @test "parse ensures the tag exists" {
   setup_changelog
-  run ./chag parse --tag 9.9.9 $BATS_TMPDIR/test-changelog
+  run ./chag parse $CHNGFILE 9.9.9
   delete_changelog
   [ $status -eq 1 ]
   [ $(expr "${lines[0]}" : "Tag 9.9.9 not found") -ne 0 ]
 }
 
-@test "parse can parse a specific tag" {
-  run ./chag parse --tag 0.0.1 CHANGELOG.rst
-  [ $status -eq 0 ]
-  # The filename is randomly generated, so just check for "/"
-  [ $(expr "${lines[0]}" : "0.0.1 2014-08-10 /") -ne 0 ]
-  # Ensure the file exists
-  file=$(echo ${lines[0]} | cut -d ' ' -f 3)
-  [ -f "$file" ]
-  # Ensure the file contains the correct text
-  [ $(cat "$file") == "* Initial release." ]
-  # Delete the file
-  rm "$file"
-}
-
-@test "parse can parse latest changelog tag" {
+@test "parse can parse a tag" {
   setup_changelog
-  run ./chag parse $BATS_TMPDIR/test-changelog
+  run ./chag parse $CHNGFILE 0.0.1
   delete_changelog
   [ $status -eq 0 ]
-  [ $(expr "${lines[0]}" : "0.0.2 2014-08-10 /") -ne 0 ]
-  file=$(echo ${lines[0]} | cut -d ' ' -f 3)
-  [ -f "$file" ]
-  [ $(cat "$file") == '* Correcting ``--debug`` description.' ]
-  rm "$file"
+  [ "${lines[0]}" == "* Initial release." ]
+}
+
+@test "parse can parse the latest tag" {
+  setup_changelog
+  run ./chag parse $CHNGFILE latest
+  delete_changelog
+  [ $status -eq 0 ]
+  [ "${lines[0]}" == '* Correcting ``--debug`` description.' ]
 }
