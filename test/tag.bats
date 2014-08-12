@@ -29,7 +29,6 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 }
 
 @test "tag ensures parse succeeds" {
-
   run ./chag tag CHANGELOG.rst 999.999.999
   [ $status -eq 1 ]
   [ "${lines[0]}" == "Tag 999.999.999 not found in CHANGELOG.rst" ]

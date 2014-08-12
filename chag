@@ -267,7 +267,7 @@ tag() {
     debug "Running git command: $cmd"
   fi
 
-  $parse_cmd | $cmd || {
+  $parse_cmd || $cmd || {
     die "[FAILURE] Failed tagging $tag: Error code $success"
   }
 
