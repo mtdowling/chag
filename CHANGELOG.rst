@@ -2,7 +2,7 @@
 CHANGELOG
 =========
 
-Next Release (TBD)
+0.2.0 (2014-08-11)
 ------------------
 
 Adding new commands and changing how parsing works.
