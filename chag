@@ -310,6 +310,8 @@ update() {
 
   # Iterate over each line and replace them as needed
   local i=1 border_line=-1
+  # Ensure spaces aren't stripped
+  IFS=''
   while read text; do
     if [ "$text" == 'Next Release (TBD)' ]; then
       # Replace the TBD line
