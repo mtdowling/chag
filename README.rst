@@ -5,6 +5,10 @@ chag
 *chag* stands for "changelog tag". It allows you to use your project's
 changelog as the canonical source of change data.
 
+.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
+   :target: https://travis-ci.org/mtdowling/chag
+   :alt: Build status
+
 What does it do?
 ----------------
 
@@ -23,10 +27,6 @@ Why use chag?
 2. If you use `Travis CI's deploy feature <http://docs.travis-ci.com/user/deployment/releases/>`_
    to automatically deploy to GitHub eleases, then the contents of your GitHub
    releases will mirror the contents of the corresponding changelog entry.
-
-.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
-   :target: https://travis-ci.org/mtdowling/chag
-   :alt: Build status
 
 Workflow
 --------
