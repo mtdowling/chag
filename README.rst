@@ -120,8 +120,8 @@ Usage
 parse
 ~~~~~
 
-Parses a changelog entry. If no ``--tag`` option is provided, then the latest
-changelog entry is parsed.
+Outpus the contents of a changelog entry. Pass ``latest`` to get the contents
+of the latest changelog entry.
 
 ::
 
@@ -154,8 +154,8 @@ changelog entry is parsed.
 tag
 ~~~
 
-Creates an annotated git tag from a changelog entry. If no ``--tag`` option
-is provided, then the latest changelog entry is parsed and tagged.
+Creates an annotated git tag from a changelog entry. Pass ``latest`` as the
+tag to tag the latest changelog entry.
 
 ::
 
