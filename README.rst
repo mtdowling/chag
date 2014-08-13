@@ -52,18 +52,7 @@ chag workflow is:
 Installation
 ------------
 
-You can install chag using cURL:
 
-::
-
-    curl -s https://raw.githubusercontent.com/mtdowling/chag/master/install.sh | bash
-
-You can customize the install source, directory and profile using the
-CHAG_DIR and CHAG_VERSION environment variables. The script will place chag
-in /usr/local/bin by default.
-
-You can also install chag by cloning the repository and placing it somewhere
-in your path manually.
 
 Changelog Format
 ----------------

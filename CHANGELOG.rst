@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+Next Release
+------------
+
+Rewritten in Python using Click 3.0
+
 0.2.0 (2014-08-11)
 ------------------
 
