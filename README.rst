@@ -27,7 +27,7 @@ Why use chag?
    `chag's atom feed <https://github.com/mtdowling/chag/releases.atom>`_ for
    an example.
 2. If you use `Travis CI's deploy feature <http://docs.travis-ci.com/user/deployment/releases/>`_
-   to automatically deploy to GitHub eleases, then the contents of your GitHub
+   to automatically deploy to GitHub releases, then the contents of your GitHub
    releases will mirror the contents of the corresponding changelog entry.
 3. Helps to ensure your changelog is always up to date.
 
