@@ -139,17 +139,18 @@ def tag(file, border, v_prefix, sign, force):
         raise click.ClickException('Not tagging a "Next Release" entry!')
     click.echo('Ensuring git repository is clean with git diff', err=True)
     git_is_clean()
+    # Use the appropriate tag name based on the --v-prefix option
+    if v_prefix:
+        tag_name = 'v' + found['tag']
+    else:
+        tag_name = found['tag']
     # Build up the git tag argument list
     args = ['git', 'tag', '-a', '-F', '-']
     if force:
         args.append('--force')
     if sign:
         args.append('--sign')
-    # Add the appropriate tag name based on the --v-prefix option.
-    if v_prefix:
-        args.append('v' + found['tag'])
-    else:
-        args.append(found['tag'])
+    args.append(tag_name)
 
     click.echo('Creating a git tag using: ' + ' '.join(args), err=True)
     click.echo("Using the following annotation:", err=True)
@@ -160,7 +161,7 @@ def tag(file, border, v_prefix, sign, force):
         tmp.seek(0)
         try:
             subprocess.check_call(args, stdin=tmp)
-            click.echo('[SUCCESS] Tagged %s' % tag, err=True)
+            click.echo('[SUCCESS] Tagged %s' % tag_name, err=True)
         except subprocess.CalledProcessError as e:
             raise click.ClickException('[FAILED] %s' % str(e))
 
