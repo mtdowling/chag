@@ -7,7 +7,4 @@ python:
   - "3.4"
   - "pypy"
 
-install:
-  - python setup.py
-
 script: make test

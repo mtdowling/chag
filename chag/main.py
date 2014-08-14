@@ -107,7 +107,7 @@ def update(file, heading, border):
         heading = heading.replace('()', replacement)
     found = get_tag(file, border, 'latest')
     file.seek(0)
-    lines = file.readlines()
+    lines = [l.decode('utf-8') for l in file.readlines()]
     lines[found['line_number']] = heading + "\n"
     lines[found['line_number'] + 1] = (border * len(heading)) + "\n"
     with open(file.name, 'w') as f:

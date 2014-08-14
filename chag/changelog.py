@@ -55,7 +55,7 @@ def get_tags(changelog, border):
         # Split on "\n" but ensure each line still has a trailing "\n"
         changelog = [l + "\n" for l in changelog.split("\n")]
     elif hasattr(changelog, 'readlines'):
-        changelog = changelog.readlines()
+        changelog = [l.decode('utf-8') for l in changelog.readlines()]
     else:
         raise click.ClickException('Invalid changelog supplied')
 

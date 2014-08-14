@@ -94,7 +94,7 @@ class TestChangelog(unittest.TestCase):
         assert result.output.strip() == '* Initial release.'
 
     def test_cli_gets_latest(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
@@ -103,7 +103,7 @@ class TestChangelog(unittest.TestCase):
             assert result.output.strip() == 'Next'
 
     def test_cli_gets_latest_with_json(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
@@ -115,7 +115,7 @@ class TestChangelog(unittest.TestCase):
             assert '"contents": "Some contents"' in result.output
 
     def test_cli_fails_when_not_found(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
@@ -124,17 +124,17 @@ class TestChangelog(unittest.TestCase):
             assert 'tag "foo" not found' in result.output
 
     def test_cli_lists_tags(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
             result = runner.invoke(main.list, [file.name])
-            expected = ['Next', '0.2.0', '0.1.0']
             assert result.exit_code == 0
+            expected = ['Next', '0.2.0', '0.1.0']
             assert result.output.split("\n")[:-1] == expected
 
     def test_cli_updates_latest(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
@@ -147,7 +147,7 @@ class TestChangelog(unittest.TestCase):
             assert lines[6] == "----\n"
 
     def test_cli_updates_latest_with_date(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
@@ -157,7 +157,7 @@ class TestChangelog(unittest.TestCase):
             assert expected in result.output
 
     def test_cli_does_not_tag_latest(self):
-        with tempfile.NamedTemporaryFile() as file:
+        with tempfile.NamedTemporaryFile('w+') as file:
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
