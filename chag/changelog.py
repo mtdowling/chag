@@ -1,16 +1,17 @@
 import re
 
+import click
 
-def get_tag(lines, tag, border):
+def get_tag(changlog, border, tag):
     """Get a specific tag entry by version number.
 
     Parameters
     ----------
 
-    lines : a file object or iterable lines of a changelog.
+    changelog : a file object or string of a changelog.
+    border : str The border character that is repeated under a tag.
     tag : str Specific tag to retrieve. Use 'latest' as the tag to return the
           first entry in the changelog.
-    border : str The border character that is repeated under a tag.
 
     Returns
     -------
@@ -28,19 +29,19 @@ def get_tag(lines, tag, border):
     Exception
         If the tag cannot be found
     """
-    for found in get_tags(lines, border):
+    for found in get_tags(changlog, border):
         if found['tag'] == tag or tag == 'latest':
             return found
-    raise Exception('tag not found')
+    raise click.ClickException('tag "%s" not found' % tag)
 
 
-def get_tags(lines, border):
+def get_tags(changelog, border):
     """Yields each found tag from a changelog file.
 
     Parameters
     ----------
 
-    lines : a file object or iterable lines of a changelog.
+    changelog : a file object or string of a changelog.
     border : str The border character that is repeated under a tag.
 
     Returns
@@ -50,39 +51,45 @@ def get_tags(lines, border):
         Each yielded item is a dictionary containing keys described in
         the get_tag() function.
     """
-    if hasattr(lines, 'readlines'):
-        lines = lines.readlines()
-    last_line = len(lines) - 1
-    regex = _get_regex(border)
+    if type(changelog) is str:
+        # Split on "\n" but ensure each line still has a trailing "\n"
+        changelog = [l + "\n" for l in changelog.split("\n")]
+    elif hasattr(changelog, 'readlines'):
+        changelog = changelog.readlines()
+    else:
+        raise click.ClickException('Invalid changelog supplied')
+
+    if len(changelog) < 2:
+        raise click.ClickException('Not a valid changelog file')
+
     n = -1
     current = None
+    last_line = len(changelog) - 1
+    regex = re.compile('^' + re.escape(border) + '+$')
 
-    for line in lines:
-        n = n + 1
+    for line in changelog:
+        n += 1
         if n == last_line:
             if current:
-                current['contents'] = current['contents'] + line
-                yield _clean_current(current)
-        elif _is_heading(line, lines[n + 1], regex):
+                yield _clean_current(current, line)
+        elif _is_heading(line, changelog[n + 1], regex):
             if current:
                 yield _clean_current(current)
             current = {
                 'line_number': n,
                 'full_heading': line.strip(),
-                'tag': line.split(' ')[0],
+                'tag': line.strip().split(' ')[0],
                 'contents': ''
             }
         elif current and not regex.match(line):
-            current['contents'] = current['contents'] + line
+            current['contents'] += line
 
 
-def _clean_current(current):
+def _clean_current(current, line=None):
+    if line:
+        current['contents'] += line
     current['contents'] = current['contents'].strip()
     return current
-
-
-def _get_regex(border):
-    return re.compile('^' + re.escape(border) + '+$')
 
 
 def _is_heading(line, next_line, regex):
