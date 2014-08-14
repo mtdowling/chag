@@ -37,7 +37,7 @@ def contents(file, tag, border):
       chag contents CHANGELOG 0.1.0
       chag contents --border='=' CHANGELOG 0.1.0
     """
-    click.echo(get_tag(file, tag, border)['contents'])
+    click.echo(get_tag(file, border, tag)['contents'])
 
 
 @main.command()
@@ -65,9 +65,9 @@ def get(file, tag, border, json):
       chag get --json CHANGELOG 0.0.1
     """
     if json:
-        click.echo(j.dumps(get_tag(file, tag, border)))
+        click.echo(j.dumps(get_tag(file, border, tag)))
     else:
-        click.echo(get_tag(file, tag, border)['tag'])
+        click.echo(get_tag(file, border, tag)['tag'])
 
 
 @main.command()
@@ -105,14 +105,14 @@ def update(file, heading, border):
     if heading[-2::] == '()':
         replacement = '(' + time.strftime('%Y-%m-%d') + ')'
         heading = heading.replace('()', replacement)
-    found = get_tag(file, 'latest', border)
+    found = get_tag(file, border, 'latest')
     file.seek(0)
     lines = file.readlines()
     lines[found['line_number']] = heading + "\n"
     lines[found['line_number'] + 1] = (border * len(heading)) + "\n"
     with open(file.name, 'w') as f:
         f.write(''.join(lines))
-
+    click.echo('Updated first changelog entry to %s' % heading, err=True)
 
 @main.command()
 @click.option('--border', default='-', help='Repeated border character')
@@ -134,7 +134,7 @@ def tag(file, border, v_prefix, sign, force):
       chag tag --force CHANGELOG.md
       chag tag --debug CHANGELOG.md
     """
-    found = get_tag(file, 'latest', border)
+    found = get_tag(file, border, 'latest')
     if found['tag'] == 'Next':
         raise click.ClickException('Not tagging a "Next Release" entry!')
     click.echo('Ensuring git repository is clean with git diff', err=True)
