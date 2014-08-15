@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-
-
-readme = open('README.rst').read()
+from setuptools import setup
 
 requirements = [
-    'click==3.0',
+    'click==3.0'
 ]
 
 test_requirements = [
@@ -17,7 +14,7 @@ setup(
     name='chag',
     version='0.3.0',
     description="Parses changelog files and helps with changelog workflows",
-    long_description=readme,
+    long_description=open('README.rst').read(),
     author='Michael Dowling',
     author_email='mtdowling@gmail.com',
     url="https://github.com/mtdowling/chag",

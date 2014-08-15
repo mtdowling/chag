@@ -2,10 +2,14 @@
 CHANGELOG
 =========
 
-Next Release
-------------
+0.3.0 (2014-08-14)
+------------------
 
 Rewritten in Python using Click.
+
+* Added the `append` command.
+* Added the ability to get messages from an external editor.
+* Added the ability to link Github issues and git commits.
 
 0.2.0 (2014-08-11)
 ------------------

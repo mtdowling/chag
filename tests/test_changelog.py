@@ -6,7 +6,7 @@ import pytest
 import unittest
 import click
 from click.testing import CliRunner
-from chag import changelog, main
+from chag import main, changelog
 
 CHANGELOG = os.path.realpath(__file__ + '/../../CHANGELOG.rst')
 
@@ -89,7 +89,8 @@ class TestChangelog(unittest.TestCase):
 
     def test_cli_gets_contents(self):
         runner = CliRunner()
-        result = runner.invoke(main.contents, [CHANGELOG, '0.0.1'])
+        result = runner.invoke(main.contents, ['-f', CHANGELOG,
+                                               '-t', '0.0.1'])
         assert result.exit_code == 0
         assert result.output.strip() == '* Initial release.'
 
@@ -98,7 +99,7 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.get, [file.name, 'latest'])
+            result = runner.invoke(main.get, ['-f', file.name])
             assert result.exit_code == 0
             assert result.output.strip() == 'Next'
 
@@ -107,7 +108,7 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.get, [file.name, 'latest', '--json'])
+            result = runner.invoke(main.get, ['-f', file.name, '--json'])
             assert result.exit_code == 0
             assert '"full_heading": "Next Release"' in result.output
             assert '"tag": "Next"' in result.output
@@ -119,7 +120,7 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.get, [file.name, 'foo'])
+            result = runner.invoke(main.get, ['-f', file.name, '-t', 'foo'])
             assert result.exit_code == 1
             assert 'tag "foo" not found' in result.output
 
@@ -128,7 +129,7 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.list, [file.name])
+            result = runner.invoke(main.list, ['-f', file.name])
             assert result.exit_code == 0
             expected = ['Next', '0.2.0', '0.1.0']
             assert result.output.split("\n")[:-1] == expected
@@ -138,7 +139,8 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.update, [file.name, 'Foo!'])
+            result = runner.invoke(main.update, ['-f', file.name,
+                                                 '-m', 'Foo!'])
             assert result.exit_code == 0
             assert 'Updated first changelog entry to Foo!' in result.output
             file.seek(0)
@@ -151,7 +153,8 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.update, [file.name, '2.0.0 ()'])
+            result = runner.invoke(main.update, ['-f', file.name,
+                                                 '-m', '2.0.0 ()'])
             assert result.exit_code == 0
             expected = 'to 2.0.0 (%s)' % time.strftime('%Y-%m-%d')
             assert expected in result.output
@@ -161,10 +164,6 @@ class TestChangelog(unittest.TestCase):
             file.write(CHANGELOGA)
             file.seek(0)
             runner = CliRunner()
-            result = runner.invoke(main.tag, [file.name])
+            result = runner.invoke(main.tag, ['-f', file.name])
             assert result.exit_code == 1
             assert 'Not tagging a "Next Release" entry!' in result.output
-
-
-if __name__ == '__main__':
-    unittest.main()

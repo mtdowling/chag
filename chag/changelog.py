@@ -1,6 +1,8 @@
 import re
+import time
 
 import click
+
 
 def get_tag(changlog, border, tag):
     """Get a specific tag entry by version number.
@@ -55,7 +57,7 @@ def get_tags(changelog, border):
         # Split on "\n" but ensure each line still has a trailing "\n"
         changelog = [l + "\n" for l in changelog.split("\n")]
     elif hasattr(changelog, 'readlines'):
-        changelog = [l.decode('utf-8') for l in changelog.readlines()]
+        changelog = changelog.readlines()
     else:
         raise click.ClickException('Invalid changelog supplied')
 
@@ -83,6 +85,65 @@ def get_tags(changelog, border):
             }
         elif current and not regex.match(line):
             current['contents'] += line
+
+
+def update(changelog, border, heading):
+    """Updates a specific entry in a changelog file.
+
+    Parameters
+    ----------
+
+    changelog : a changelog file object
+    border : str The border character that is repeated under a tag.
+    heading : The heading to add to the first changelog item
+
+    Return
+    ------
+
+    str
+        Returns the string that was used as the heading in the entry.
+    """
+    # Replace the date if needed
+    if heading[-2::] == '()':
+        replacement = '(' + time.strftime('%Y-%m-%d') + ')'
+        heading = heading.replace('()', replacement)
+    found = get_tag(changelog, border, 'latest')
+    changelog.seek(0)
+    lines = changelog.readlines()
+    lines[found['line_number']] = heading + "\n"
+    lines[found['line_number'] + 1] = (border * len(heading)) + "\n"
+    with open(changelog.name, 'w') as f:
+        f.write(''.join(lines))
+    return heading
+
+
+def append(changelog, border, entry):
+    """Appends an entry to the first changelog entry.
+
+    Parameters
+    ----------
+
+    changelog : a changelog file object
+    border : str The border character that is repeated under a tag.
+    entry: str The entry to append.
+
+    Return
+    ------
+
+    str
+        Returns the entry that was appended.
+    """
+    tag = get_tag(changelog, border, 'latest')
+    changelog.seek(0)
+    lines = changelog.readlines()
+    content_size = tag['contents'].count("\n")
+    append_line = tag['line_number'] + 3 + content_size
+    lines[append_line] += entry + "\n"
+
+    with open(changelog.name, 'w') as f:
+        f.write(''.join(lines))
+
+    return entry
 
 
 def _clean_current(current, line=None):
