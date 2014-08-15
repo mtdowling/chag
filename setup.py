@@ -3,7 +3,7 @@
 from setuptools import setup
 
 requirements = [
-    'click==3.0'
+    'click>=3,<4'
 ]
 
 test_requirements = [
