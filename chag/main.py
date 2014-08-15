@@ -181,7 +181,7 @@ def tag(f, border, v_prefix, sign, force):
     click.echo("Using the following annotation:", err=True)
     click.echo('  ' + found['contents'].replace("\n", "\n    "), err=True)
     try:
-        git.get_tag_args(tag_name, force, sign, found['contents'])
+        git.tag(tag_name, found['contents'], force, sign)
         click.echo('[SUCCESS] Tagged %s' % tag_name, err=True)
     except Exception as e:
         raise click.ClickException('[FAILED] %s' % str(e))
