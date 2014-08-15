@@ -4,8 +4,7 @@ import tempfile
 import os
 
 import click
-import changelog
-import chag.git as git
+from chag import git, changelog
 
 
 def _load_changelog(f):

@@ -82,7 +82,7 @@ class TestChangelog(unittest.TestCase):
         assert '' == found['contents']
 
     def test_can_parse_files(self):
-        with open(CHANGELOG, 'rb') as file:
+        with open(CHANGELOG, 'r') as file:
             found = changelog.get_tag(file, '-', '0.0.1')
             assert found['tag'] == '0.0.1'
             assert found['contents'] == '* Initial release.'
