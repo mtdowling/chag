@@ -232,10 +232,11 @@ def tag(f, border, v_prefix, sign, force):
     else:
         tag_name = found.version
     click.echo("Using the following annotation:", err=True)
-    click.echo('  ' + found.contents.replace("\n", "\n    "), err=True)
+    click.echo("============", err=True)
+    click.echo(found.contents, err=True)
     try:
         chag.git.tag(tag_name, found.contents, force, sign)
-        click.echo('Tagged %s' % tag_name, err=True)
+        click.echo("============\nTagged %s" % tag_name, err=True)
     except Exception as e:
         raise click.ClickException(str(e))
 
