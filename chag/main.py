@@ -1,6 +1,7 @@
 import json as j
 import subprocess
 import tempfile
+import textwrap
 import os
 
 import click
@@ -24,13 +25,11 @@ def __validate_changelog(changelog):
     return changelog
 
 
-def __get_message(m, github=None):
+def __get_message(m):
     if not m:
         with tempfile.NamedTemporaryFile(suffix=".tmp") as tmp:
             subprocess.call([os.environ.get('EDITOR', 'vim'), tmp.name])
             m = open(tmp.name, 'r').read()[:-1]
-    if github:
-        m = chag.git.github_markdown(github, m)
     return m
 
 
@@ -152,9 +151,10 @@ def update(m, f, border):
 @main.command()
 @click.option('--border', default='-', help='Repeated border character')
 @click.option('--github', help='Pass the "user/repo" of your GitHub project')
+@click.option('--wrap/--no-wrap', help='Wrap at 80 chars', default=True)
 @click.option('-f', type=click.File('r'), help='Path to changelog')
 @click.option('-m', help='Changelog entry to append')
-def append(f, border, github, m):
+def append(f, border, github, m, wrap):
     """Appends an entry to the first changelog entry. Pass the entry in the
     -m option. If no -m option is provided, an editor will open where you can
     enter the changelog message to append. The editor that is opened is based
@@ -169,10 +169,35 @@ def append(f, border, github, m):
     """
     f = __load(f)
     changelog = __validate_changelog(chag.Changelog(f, border))
-    changelog.entries[0].contents += "\n" + __get_message(m, github)
+    m = __get_message(m)
+    if github:
+        m = chag.git.github_markdown(github, m)
+    if wrap:
+        m = "\n".join(textwrap.wrap(m, 80))
+    changelog.entries[0].contents += "\n" + m
     with open(f.name, 'w') as output:
         output.write(str(changelog))
     click.echo('Appended to the first changelog entry', err=True)
+    click.echo("\n" + chag.git.diff(f.name), err=True)
+
+
+@main.command()
+@click.option('--border', default='-', help='Repeated border character')
+@click.option('-f', type=click.File('r'), help='Path to changelog')
+def new(f, border):
+    """Create a "Next Release" changelog entry at the top of the changelog.
+
+    \b
+    Examples:
+        chag new
+        chag new --border '=' -f CHANGELOG.markdown
+    """
+    f = __load(f)
+    changelog = chag.Changelog(f, border)
+    changelog.entries.insert(0, chag.Entry(0, 'Next Release', '-', ''))
+    with open(f.name, 'w') as output:
+        output.write(str(changelog))
+    click.echo('Created a new "Next Release" entry in changelog', err=True)
     click.echo("\n" + chag.git.diff(f.name), err=True)
 
 

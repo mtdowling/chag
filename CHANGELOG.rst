@@ -2,10 +2,11 @@
 CHANGELOG
 =========
 
-Next Release
-------------
+0.5.0 (2014-08-16)
+------------------
 
 * Refactored to use classes and cleaned up implementation
+* Added a ``new`` command used to create a ``Next Release`` entry.
 
 0.4.0 (2014-08-15)
 ------------------

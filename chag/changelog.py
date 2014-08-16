@@ -83,4 +83,4 @@ class Entry(object):
             heading = heading.replace('()', replacement)
         return "%s\n%s\n\n%s\n" % (heading,
                                    self.border * len(heading),
-                                   self.contents)
+                                   self.contents.strip())

@@ -154,6 +154,19 @@ class TestCli(unittest.TestCase):
             expected = "Issue https://github.com/foo/bar/issues/2, abeffff\n"
             assert lines[8] == expected
 
+    def test_cli_creates_new_entry(self):
+        self.__create_git(TEST_CHANGELOG)
+        runner = CliRunner()
+        result = runner.invoke(main.new, ['-f', self.f])
+        assert result.exit_code == 0
+        with open(self.f, 'r') as f:
+            lines = f.readlines()
+            assert lines[4] == "Next Release\n"
+            assert lines[5] == "------------\n"
+            assert lines[6] == "\n"
+            assert lines[7] == "\n"
+            assert lines[8] == "\n"
+
     def test_cli_does_not_tag_latest(self):
         with tempfile.NamedTemporaryFile('w+') as file:
             file.write(TEST_CHANGELOG)
