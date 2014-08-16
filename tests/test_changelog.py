@@ -73,9 +73,8 @@ class TestChangelog(unittest.TestCase):
         self.assertEqual(entry.contents, '')
 
     def test_throws_when_version_not_found(self):
-        with self.assertRaises(ValueError):
-            changelog = chag.Changelog(TEST_CHANGELOG)
-            changelog.get_version('100')
+        changelog = chag.Changelog(TEST_CHANGELOG)
+        self.assertRaises(ValueError, lambda: changelog.get_version('100'))
 
     def test_casts_to_string(self):
         changelog = chag.Changelog(TEST_CHANGELOG)
@@ -84,4 +83,4 @@ class TestChangelog(unittest.TestCase):
     def test_entry_handles_current_date(self):
         changelog = chag.Changelog(TEST_CHANGELOG)
         changelog.entries[-1].heading = 'Foo ()'
-        self.assertIn('Foo (2014-08-16)', str(changelog))
+        self.assertTrue('Foo (2014-08-16)' in str(changelog))
