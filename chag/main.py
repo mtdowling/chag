@@ -4,10 +4,10 @@ import tempfile
 import os
 
 import click
-from chag import git, changelog
+import chag
 
 
-def _load_changelog(f):
+def __load(f):
     """Loads the provided file or attempts to find the changelog file"""
     if f:
         return f
@@ -15,16 +15,30 @@ def _load_changelog(f):
         check = os.getcwd() + '/' + check
         if os.path.isfile(check):
             return open(check, 'r+')
-    raise click.ClickException('Changelog file not provided and not found')
+    raise click.ClickException('Changelog file could not be found')
 
 
-def _get_message(m):
-    """Gets a message from a variable or EDITOR if not set"""
+def __validate_changelog(changelog):
+    if len(changelog.entries) == 0:
+        raise click.ClickException('No changelog entries found in file')
+    return changelog
+
+
+def __get_message(m, github=None):
     if not m:
         with tempfile.NamedTemporaryFile(suffix=".tmp") as tmp:
             subprocess.call([os.environ.get('EDITOR', 'vim'), tmp.name])
             m = open(tmp.name, 'r').read()[:-1]
+    if github:
+        m = chag.git.github_markdown(github, m)
     return m
+
+
+def __get_version(changelog, version):
+    try:
+        return changelog.get_version(version)
+    except ValueError as e:
+        raise click.ClickException(str(e))
 
 
 @click.group()
@@ -36,7 +50,7 @@ def main(ctx):
 @main.command()
 @click.option('--border', default='-', help='Repeated border character')
 @click.option('-f', type=click.File('r'), help='Path to changelog')
-@click.option('-t', help='Tag to retrieve', default='latest')
+@click.option('-t', help='Tag version to retrieve', default='latest')
 def contents(t, f, border):
     """Returns the changelog contents for the provided -t tag, or the latest
     tag if no -t option is provided.
@@ -48,8 +62,10 @@ def contents(t, f, border):
       chag contents -f CHANGELOG -t latest
       chag contents --border='='
     """
-    f = _load_changelog(f)
-    click.echo(changelog.get_tag(f, border, t)['contents'])
+    f = __load(f)
+    changelog = __validate_changelog(chag.Changelog(f, border))
+    entry = __get_version(changelog, t)
+    click.echo(entry.contents)
 
 
 @main.command()
@@ -57,7 +73,7 @@ def contents(t, f, border):
 @click.option('--json/--no-json', default=False,
               help='Determines if JSON or just the version is returned.')
 @click.option('-f', type=click.File('r'), help='Path to changelog')
-@click.option('-t', help='Tag to retrieve', default='latest')
+@click.option('-t', help='Tag version to retrieve', default='latest')
 def get(t, f, border, json):
     """Prints out a specific tag number or JSON data for a specific tag. Pass
     'latest' as the -t option to parse the first found tag entry in the
@@ -67,9 +83,9 @@ def get(t, f, border, json):
     JSON output contains the following keys:
 
     \b
-    - line_number: Line that the tag heading is found
-    - full_heading: The full heading line
-    - tag: Just the tag from the heading (e.g., '0.1.0')
+    - line: Line that the tag heading is found
+    - heading: The full heading line
+    - version: Just the tag from the heading (e.g., '0.1.0')
     - contents: The text content of the changelog entry
 
     Examples:
@@ -77,17 +93,22 @@ def get(t, f, border, json):
       chag get --border='=' latest
       chag get --json 0.0.1
     """
-    f = _load_changelog(f)
-    if json:
-        click.echo(j.dumps(changelog.get_tag(f, border, t)))
+    f = __load(f)
+    changelog = __validate_changelog(chag.Changelog(f, border))
+    entry = __get_version(changelog, t)
+    if not json:
+        click.echo(entry.version)
     else:
-        click.echo(changelog.get_tag(f, border, t)['tag'])
+        click.echo(j.dumps({'line': entry.line,
+                            'contents': entry.contents,
+                            'heading': entry.heading,
+                            'version': entry.version}))
 
 
 @main.command()
 @click.option('-f', type=click.File('r'), help='Path to changelog')
 @click.option('--border', default='-', help='Repeated border character')
-def list(f, border):
+def entries(f, border):
     """Lists the tag versions available in a changelog file.
 
     \b
@@ -95,8 +116,10 @@ def list(f, border):
       chag list -f CHANGELOG
       chag list --border='='
     """
-    for tag in changelog.get_tags(_load_changelog(f), border):
-        print(tag['tag'])
+    f = __load(f)
+    changelog = chag.Changelog(f, border)
+    for entry in changelog.entries:
+        click.echo(entry.version)
 
 
 @main.command()
@@ -117,9 +140,13 @@ def update(m, f, border):
       chag update -m '1.0.1 ()'
       chag update --border='='
     """
-    heading = _get_message(m)
-    heading = changelog.update(_load_changelog(f), border, heading)
-    click.echo('Updated first changelog entry to %s' % heading, err=True)
+    f = __load(f)
+    changelog = __validate_changelog(chag.Changelog(f, border))
+    changelog.entries[0].heading = __get_message(m)
+    with open(f.name, 'w') as output:
+        output.write(str(changelog))
+    click.echo('Updated first changelog entry', err=True)
+    click.echo("\n" + chag.git.diff(f.name), err=True)
 
 
 @main.command()
@@ -136,16 +163,17 @@ def append(f, border, github, m):
     \b
     Examples:
         chag append -m '* Updated this file'
-        chag append --github -m '* Updated this file'
-        chag append --github --border='=' -m '* Updated this file'
+        chag append --github user/repo -m '* Updated this file'
+        chag append --github user/repo --border='=' -m '* Updated this file'
         chag append
     """
-    m = _get_message(m)
-    if github:
-        m = git.github_markdown(github, m)
-    changelog.append(_load_changelog(f), border, m)
-    click.echo('Appended to the first changelog entry:', err=True)
-    click.echo(m, err=True)
+    f = __load(f)
+    changelog = __validate_changelog(chag.Changelog(f, border))
+    changelog.entries[0].contents += "\n" + __get_message(m, github)
+    with open(f.name, 'w') as output:
+        output.write(str(changelog))
+    click.echo('Appended to the first changelog entry', err=True)
+    click.echo("\n" + chag.git.diff(f.name), err=True)
 
 
 @main.command()
@@ -167,23 +195,24 @@ def tag(f, border, v_prefix, sign, force):
       chag tag --force
       chag tag --debug
     """
-    f = _load_changelog(f)
-    found = changelog.get_tag(f, border, 'latest')
-    if found['tag'] == 'Next':
+    f = __load(f)
+    changelog = __validate_changelog(chag.Changelog(f, border))
+    found = changelog.entries[0]
+    if found.version == 'Next':
         raise click.ClickException('Not tagging a "Next Release" entry!')
     click.echo('Ensuring git repository is clean with git diff', err=True)
-    git.is_clean()
+    chag.git.is_clean()
     if v_prefix:
-        tag_name = 'v' + found['tag']
+        tag_name = 'v' + found.version
     else:
-        tag_name = found['tag']
+        tag_name = found.version
     click.echo("Using the following annotation:", err=True)
-    click.echo('  ' + found['contents'].replace("\n", "\n    "), err=True)
+    click.echo('  ' + found.contents.replace("\n", "\n    "), err=True)
     try:
-        git.tag(tag_name, found['contents'], force, sign)
-        click.echo('[SUCCESS] Tagged %s' % tag_name, err=True)
+        chag.git.tag(tag_name, found.contents, force, sign)
+        click.echo('Tagged %s' % tag_name, err=True)
     except Exception as e:
-        raise click.ClickException('[FAILED] %s' % str(e))
+        raise click.ClickException(str(e))
 
 
 if __name__ == '__main__':

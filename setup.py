@@ -6,13 +6,11 @@ requirements = [
     'click>=3,<4'
 ]
 
-test_requirements = [
-    'pytest'
-]
+test_requirements = []
 
 setup(
     name='chag',
-    version='0.3.0',
+    version='0.5.0',
     description="Parses changelog files and helps with changelog workflows",
     long_description=open('README.rst').read(),
     author='Michael Dowling',

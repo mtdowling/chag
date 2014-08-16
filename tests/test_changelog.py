@@ -1,22 +1,15 @@
-import os
 import tempfile
-import time
-
-import pytest
 import unittest
-import click
-from click.testing import CliRunner
-from chag import main, changelog
 
-CHANGELOG = os.path.realpath(__file__ + '/../../CHANGELOG.rst')
+import chag
 
-CHANGELOGA = """
+TEST_CHANGELOG = """
 =========
 CHANGELOG
 =========
 
-Next Release
-------------
+1.0.0 (2014-08-16)
+------------------
 
 Some contents
 
@@ -33,137 +26,62 @@ Hello
 -----
 
 * Test
+""".lstrip()
 
-"""
-
-CHANGELOGB = """
+TEST_CHANGELOG_EMPTY = """
+=========
 CHANGELOG
 =========
 
-0.0.1
------
+Next release
+------------
+""".lstrip()
 
-"""
 
 class TestChangelog(unittest.TestCase):
 
-    def test_ensures_file_is_valid(self):
-        with pytest.raises(click.ClickException):
-            next(changelog.get_tags([], '-'))
+    def test_parses_files(self):
+        with tempfile.NamedTemporaryFile('r+') as f:
+            f.write(TEST_CHANGELOG)
+            f.seek(0)
+            changelog = chag.Changelog(f)
+            self.assertEqual(len(changelog.entries), 3)
+            leading = "=========\nCHANGELOG\n=========\n\n"
+            self.assertEqual(leading, changelog.leading_content)
+            self.assertEqual(changelog.entries[0].version, '1.0.0')
+            self.assertEqual(changelog.entries[0].contents, 'Some contents')
+            self.assertEqual(changelog.entries[2].contents, '* Test')
 
-    def test_ensures_changelog_is_valid(self):
-        with pytest.raises(click.ClickException):
-            next(changelog.get_tags('foo', '-'))
-
-    def test_ensures_yields_tags(self):
-        iter = changelog.get_tags(CHANGELOGA, '-')
-        assert next(iter) == {'line_number': 5,
-                              'tag': 'Next',
-                              'full_heading': 'Next Release',
-                              'contents': 'Some contents'}
-        assert next(iter) == {'line_number': 10,
-                              'tag': '0.2.0',
-                              'full_heading': '0.2.0 (2014-08-11)',
-                              'contents': """Hello\n\n* a\n* b\n  c"""}
-        assert next(iter) == {'line_number': 19,
-                              'tag': '0.1.0',
-                              'full_heading': '0.1.0',
-                              'contents': '* Test'}
+    def test_parses_string(self):
+        changelog = chag.Changelog(TEST_CHANGELOG)
+        self.assertEqual(len(changelog.entries), 3)
+        self.assertEqual(changelog.entries[0].version, '1.0.0')
+        self.assertEqual(changelog.entries[0].contents, 'Some contents')
+        self.assertEqual(changelog.entries[2].contents, '* Test')
 
     def test_gets_specific_tag(self):
-        for match in [(5, 'latest'), (10, '0.2.0'), (19, '0.1.0')]:
-            found = changelog.get_tag(CHANGELOGA, '-', match[1])
-            assert match[0] == found['line_number']
+        changelog = chag.Changelog(TEST_CHANGELOG)
+        entry = changelog.get_version('1.0.0')
+        self.assertEqual(entry.version, '1.0.0')
+        self.assertEqual(entry.heading, '1.0.0 (2014-08-16)')
+        self.assertEqual(entry.line, 4)
+        self.assertEqual(entry.contents, 'Some contents')
 
     def test_handles_empty_tags(self):
-        found = changelog.get_tag(CHANGELOGB, '-', '0.0.1')
-        assert '0.0.1' == found['full_heading']
-        assert '0.0.1' == found['tag']
-        assert '' == found['contents']
+        changelog = chag.Changelog(TEST_CHANGELOG_EMPTY)
+        entry = changelog.entries[0]
+        self.assertEqual(entry.contents, '')
 
-    def test_can_parse_files(self):
-        with open(CHANGELOG, 'r') as file:
-            found = changelog.get_tag(file, '-', '0.0.1')
-            assert found['tag'] == '0.0.1'
-            assert found['contents'] == '* Initial release.'
+    def test_throws_when_version_not_found(self):
+        with self.assertRaises(ValueError):
+            changelog = chag.Changelog(TEST_CHANGELOG)
+            changelog.get_version('100')
 
-    def test_cli_gets_contents(self):
-        runner = CliRunner()
-        result = runner.invoke(main.contents, ['-f', CHANGELOG,
-                                               '-t', '0.0.1'])
-        assert result.exit_code == 0
-        assert result.output.strip() == '* Initial release.'
+    def test_casts_to_string(self):
+        changelog = chag.Changelog(TEST_CHANGELOG)
+        self.assertEqual(TEST_CHANGELOG, str(changelog))
 
-    def test_cli_gets_latest(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.get, ['-f', file.name])
-            assert result.exit_code == 0
-            assert result.output.strip() == 'Next'
-
-    def test_cli_gets_latest_with_json(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.get, ['-f', file.name, '--json'])
-            assert result.exit_code == 0
-            assert '"full_heading": "Next Release"' in result.output
-            assert '"tag": "Next"' in result.output
-            assert '"line_number": 5' in result.output
-            assert '"contents": "Some contents"' in result.output
-
-    def test_cli_fails_when_not_found(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.get, ['-f', file.name, '-t', 'foo'])
-            assert result.exit_code == 1
-            assert 'tag "foo" not found' in result.output
-
-    def test_cli_lists_tags(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.list, ['-f', file.name])
-            assert result.exit_code == 0
-            expected = ['Next', '0.2.0', '0.1.0']
-            assert result.output.split("\n")[:-1] == expected
-
-    def test_cli_updates_latest(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.update, ['-f', file.name,
-                                                 '-m', 'Foo!'])
-            assert result.exit_code == 0
-            assert 'Updated first changelog entry to Foo!' in result.output
-            file.seek(0)
-            lines = file.readlines()
-            assert lines[5] == "Foo!\n"
-            assert lines[6] == "----\n"
-
-    def test_cli_updates_latest_with_date(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.update, ['-f', file.name,
-                                                 '-m', '2.0.0 ()'])
-            assert result.exit_code == 0
-            expected = 'to 2.0.0 (%s)' % time.strftime('%Y-%m-%d')
-            assert expected in result.output
-
-    def test_cli_does_not_tag_latest(self):
-        with tempfile.NamedTemporaryFile('w+') as file:
-            file.write(CHANGELOGA)
-            file.seek(0)
-            runner = CliRunner()
-            result = runner.invoke(main.tag, ['-f', file.name])
-            assert result.exit_code == 1
-            assert 'Not tagging a "Next Release" entry!' in result.output
+    def test_entry_handles_current_date(self):
+        changelog = chag.Changelog(TEST_CHANGELOG)
+        changelog.entries[-1].heading = 'Foo ()'
+        self.assertIn('Foo (2014-08-16)', str(changelog))

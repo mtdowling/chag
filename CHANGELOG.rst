@@ -2,6 +2,11 @@
 CHANGELOG
 =========
 
+Next Release
+------------
+
+* Refactored to use classes and cleaned up implementation
+
 0.4.0 (2014-08-15)
 ------------------
 
