@@ -23,7 +23,6 @@ setup(
     install_requires=requirements,
     license='MIT',
     keywords="changelog",
-    py_modules=['chag'],
     entry_points="""
         [console_scripts]
         chag=chag.main:main
