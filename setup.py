@@ -29,7 +29,7 @@ setup(
     """,
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'License :: OSI Approved :: MIT'
+        'License :: OSI Approved :: MIT',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
