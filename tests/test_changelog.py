@@ -1,3 +1,4 @@
+import time
 import tempfile
 import unittest
 
@@ -83,4 +84,6 @@ class TestChangelog(unittest.TestCase):
     def test_entry_handles_current_date(self):
         changelog = chag.Changelog(TEST_CHANGELOG)
         changelog.entries[-1].heading = 'Foo ()'
-        self.assertTrue('Foo (2014-08-16)' in str(changelog))
+        replacement = '(' + time.strftime('%Y-%m-%d') + ')'
+        expected = 'Foo ' + replacement
+        self.assertTrue(expected in str(changelog))
