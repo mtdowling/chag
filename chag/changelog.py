@@ -8,7 +8,7 @@ class Changelog(object):
     def __init__(self, data, border='-'):
         self.leading_content = ''
         self.border = border
-        self.entries = self.__parse(self.__normalize_input(data))
+        self.entries = self._parse(self._normalize_input(data))
 
     def get_version(self, version):
         for entry in self.entries:
@@ -24,7 +24,7 @@ class Changelog(object):
             result += str(entry) + "\n"
         return result.strip() + "\n"
 
-    def __parse(self, lines):
+    def _parse(self, lines):
         n = -1
         regex = re.compile('^' + re.escape(self.border) + '+$')
         entries = []
@@ -32,7 +32,7 @@ class Changelog(object):
         while len(lines):
             line = lines.pop(0)
             n += 1
-            if len(lines) and self.__heading(line, lines[0], regex):
+            if len(lines) and self._heading(line, lines[0], regex):
                 entries.append(Entry(n, line.strip(), self.border))
                 # Skip the border line
                 lines.pop(0)
@@ -49,7 +49,7 @@ class Changelog(object):
         return entries
 
     @staticmethod
-    def __normalize_input(data):
+    def _normalize_input(data):
         if type(data) is str:
             # Split on "\n" but ensure each line still has a trailing "\n"
             lines = [l + "\n" for l in data.split("\n")]
@@ -62,7 +62,7 @@ class Changelog(object):
         return lines
 
     @staticmethod
-    def __heading(line, next_line, regex):
+    def _heading(line, next_line, regex):
         return regex.match(next_line) and len(line) == len(next_line)
 
 
