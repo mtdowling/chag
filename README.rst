@@ -2,8 +2,8 @@
 chag
 ====
 
-*chag* stands for "changelog tag". It allows you to use your project's
-changelog as the canonical source of change data.
+*chag* (pronounced ``'chag``) stands for "changelog tag". It allows you to
+use your project's changelog as the canonical source of change data.
 
 .. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
    :target: https://travis-ci.org/mtdowling/chag
