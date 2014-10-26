@@ -1,20 +1,21 @@
-=========
-CHANGELOG
-=========
+# CHANGELOG
 
-0.5.0 (2014-08-16)
-------------------
+## 1.0.0 - 2014-10-26
+
+* Using the format from http://keepachangelog.com
+* Trimming down the feature set and switching back to bash. This makes chag
+  much simpler to install and does not require any dependencies.
+
+## 0.5.0 - 2014-08-16
 
 * Refactored to use classes and cleaned up implementation
 * Added a ``new`` command used to create a ``Next Release`` entry.
 
-0.4.0 (2014-08-15)
-------------------
+## 0.4.0 - 2014-08-15
 
 Python 3 compatibility
 
-0.3.0 (2014-08-14)
-------------------
+## 0.3.0 - 2014-08-14
 
 Rewritten in Python using Click.
 
@@ -22,8 +23,7 @@ Rewritten in Python using Click.
 * Added the ability to get messages from an external editor.
 * Added the ability to link Github issues and git commits.
 
-0.2.0 (2014-08-11)
-------------------
+## 0.2.0 - 2014-08-11
 
 Adding new commands and changing how parsing works.
 
@@ -33,31 +33,26 @@ Adding new commands and changing how parsing works.
 * Added an ``update`` command that can be used to update a CHANGELOG TBD
   heading with a new changelog entry.
 
-0.1.0 (2014-08-11)
-------------------
+## 0.1.0 - 2014-08-11
 
 * Using ``set -e``
 * Simplifying function names and error handling.
 
-0.0.4 (2014-08-11)
-------------------
+## 0.0.4 - 2014-08-11
 
 * Using POSIX style regular expression to work with GNU grep.
 * Added a ``--version`` option.
 * Writing errors to STDERR.
 * Added a bats test suite.
 
-0.0.3 (2014-08-10)
-------------------
+## 0.0.3 - 2014-08-10
 
 * Added the ability to prepend a "v" to a tag.
 
-0.0.2 (2014-08-10)
-------------------
+## 0.0.2 - 2014-08-10
 
 * Correcting ``--debug`` description.
 
-0.0.1 (2014-08-10)
-------------------
+## 0.0.1 - 2014-08-10
 
 * Initial release.
