@@ -13,7 +13,7 @@ unset COMMAND FILENAME TAG SIGN FORCE ADDV NOTRIM
 HEADING_START='## .+'
 
 version() {
-  echo "chag 0.6.0"
+  echo "chag 1.0.0"
 }
 
 usage() {
@@ -196,9 +196,9 @@ parse_options() {
 # Gets the contents of a changelog entry
 contents() {
   if [ -z "$NOTRIM" ]; then
-    get_trimmed_entry "$TAG"
+    get_trimmed_entry "$TAG" || exit $?
   else
-    get_changelog_entry "$TAG"
+    get_changelog_entry "$TAG" || exit $?
   fi
 }
 
@@ -206,7 +206,7 @@ tag() {
   `git diff --quiet HEAD` || die 'Working directory not clean'
   TAG=$(latest)
   contents_cmd="get_trimmed_entry"
-  (entries | grep -q $TAG) || die "[FAILURE] $TAG not found in $FILENAME"
+  (entries | grep -q $TAG) || die "[FAILURE] $TAG not found"
 
   if [ "$TAG" == "Unreleased" ]; then
     die 'Not tagging an Unreleased tag. Please check your changelog file.'
@@ -229,7 +229,7 @@ tag() {
     debug "Running git command: $cmd"
   fi
 
-  (contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
+  ($contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
@@ -238,12 +238,22 @@ update() {
   start=$(find_first_entry)
   local replacement="## $TAG - $(date +%Y-%m-%d)"
   perl -i -pe "s/.*/$replacement/ if \$.==${start}" $FILENAME
-  echo "[SUCCESS] Updated ${FILENAME} with $replacement"
+  echo "[SUCCESS] Updated ${FILENAME} with ${TAG}"
 }
 
 # Get a list of entry versions separated by newlines
 entries() {
   entries_and_lines | cut -d ':' -f 2
+}
+
+# Prints each heading "line_number:line" from the changelog separated w/ "\n"
+entries_and_lines() {
+  local pattern="^($HEADING_START)"
+  # Find each entry line number and version, separated by colons.
+  grep -n -E -e "$pattern" $FILENAME \
+    | sed -E 's/## //' \
+    | cut -d '-' -f 1 \
+    | sed -e 's/^ *//' -e 's/ *$//'
 }
 
 # Gets the latest version number from the changelog
@@ -270,7 +280,7 @@ get_changelog_entry() {
   fi
 
   # Ensure that the heading was found
-  [ "$found_line" == "" ] && die "Tag not found in $FILENAME"
+  [ "$found_line" == "" ] && die "[FAILURE] Tag not found"
   # First line in the file of the changelog header.
   local start_line=$(($found_line + 1))
   # Find the length of the section
@@ -294,16 +304,8 @@ get_changelog_entry() {
 # Gets a trimmed changelog entry
 get_trimmed_entry() {
   get_changelog_entry "$1" | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba'
-}
-
-# Prints each heading "line_number:line" from the changelog separated w/ "\n"
-entries_and_lines() {
-  local pattern="^($HEADING_START)"
-  # Find each entry line number and version, separated by colons.
-  grep -n -E -e "$pattern" $FILENAME \
-    | sed -E 's/## //' \
-    | cut -d '-' -f 1 \
-    | sed -e 's/^ *//' -e 's/ *$//'
+  # PIPESTATUS tells us the exit status of each command in the previous pipe.
+  [ ${PIPESTATUS[0]} -eq 0 ] || exit 1
 }
 
 main "$@"

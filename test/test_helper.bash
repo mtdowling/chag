@@ -5,7 +5,7 @@ CHAGREPO="$BATS_TMPDIR/chag-test"
 
 # Creates a test fixure changelog
 setup_changelog() {
-  tail -9 CHANGELOG.rst > $CHNGFILE
+  tail -9 CHANGELOG.md > $CHNGFILE
 }
 
 # Creates a test fixure changelog that has a TBD entry
@@ -14,7 +14,7 @@ setup_changelog_tbd() {
   printf "Next Release (TBD)\n" >> $CHNGFILE
   echo "------------------" >> $CHNGFILE
   printf "\nHello!\n\n" >> $CHNGFILE
-  tail -9 CHANGELOG.rst >> $CHNGFILE
+  tail -9 CHANGELOG.md >> $CHNGFILE
 }
 
 # Deletes the test fixture changelog
@@ -32,7 +32,7 @@ setup_repo() {
   delete_repo
   # Create new git repo
   mkdir -p $CHAGREPO
-  tail -9 CHANGELOG.rst > $CHAGREPO/CHANGELOG.rst
+  tail -9 CHANGELOG.md > $CHAGREPO/CHANGELOG.md
   cd $CHAGREPO
   git init && git add -A && git commit -m 'Initial commit'
 }

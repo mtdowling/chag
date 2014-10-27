@@ -14,12 +14,6 @@ load test_helper
   [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
-@test "latest requires a FILENAME" {
-  run ./chag latest
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : ".* latest requires a FILENAME") -ne 0 ]
-}
-
 @test "latest shows latest tag" {
   setup_changelog
   run ./chag latest --file $CHNGFILE

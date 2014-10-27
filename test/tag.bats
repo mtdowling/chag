@@ -22,27 +22,15 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
-@test "Tags with annotation and specific tag" {
-  setup_repo
-  run $chagcmd tag --addv --file CHANGELOG.rst
-  [ $status -eq 0 ]
-  [ "${lines[0]}" == '[SUCCESS] Tagged v0.0.1' ]
-  run git tag -l -n1 v0.0.1
-  cd -
-  [ $status -eq 0 ]
-  [ "${lines[0]}" == 'v0.0.1          * Initial release.' ]
-  delete_repo
-}
-
 @test "Tags debug output" {
   setup_repo
-  run $chagcmd tag --debug --file CHANGELOG.rst
+  run $chagcmd tag --debug --file CHANGELOG.md
   [ $status -eq 0 ]
   [ "${lines[0]}" == 'Tagging 0.0.2 with the following annotation:' ]
   [ "${lines[1]}" == '===[ BEGIN ]===' ]
   [ "${lines[2]}" == '* Correcting ``--debug`` description.' ]
   [ "${lines[3]}" == '===[  END  ]===' ]
-  [ "${lines[4]}" == 'Running git command: git tag   -a -F - 0.0.2' ]
+  [ "${lines[4]}" == 'Running git command: git tag -a -F - 0.0.2' ]
   [ "${lines[5]}" == '[SUCCESS] Tagged 0.0.2' ]
   run git tag -l -n1 0.0.2
   cd -
@@ -53,9 +41,9 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 
 @test "Can force a tag" {
   setup_repo
-  run $chagcmd tag CHANGELOG.rst 0.0.2
+  run $chagcmd tag CHANGELOG.md 0.0.2
   [ $status -eq 0 ]
-  run $chagcmd tag --force --file CHANGELOG.rst --tag 0.0.2
+  run $chagcmd tag --force --file CHANGELOG.md --tag 0.0.2
   [ $status -eq 0 ]
   [ "${lines[0]}" == '[SUCCESS] Tagged 0.0.2' ]
   cd -

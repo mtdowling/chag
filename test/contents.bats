@@ -25,7 +25,7 @@ load test_helper
   run ./chag contents --file $CHNGFILE --tag 9.9.9
   delete_changelog
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Tag 9.9.9 not found") -ne 0 ]
+  [ "${lines[0]}" == "[FAILURE] Tag not found" ]
 }
 
 @test "contents can contents a tag" {

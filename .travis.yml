@@ -1,14 +1,21 @@
-language: python
-
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "pypy"
+language: bash
 
 before_install:
-  - git config --global user.email "you@example.com"
-  - git config --global user.name "Your Name"
+- sudo add-apt-repository ppa:duggan/bats --yes
+- sudo apt-get update -qq
+- sudo apt-get install -qq bats
+- git config --global user.email "you@example.com"
+- git config --global user.name "Your Name"
 
-script: make test
+script:
+- make test
+
+deploy:
+  provider: releases
+  api_key:
+    secure: IFO/IqsxE2ZF1oLIWQkr7VE6yTQtbG6vea/4+zgMrknWxjkfVproj25rSgsxL3Wxln03ubOqaG50d01hDmgWoaRz3sG3wV9mMn7EjXz9+M6MBCzv940VDYzBhZUaW225Sw7SDdZIA7bsgMrvkmlhK8tZg7Ow7pcYoeRmyDrehCE=
+  file: chag
+  on:
+    repo: mtdowling/chag
+    tags: true
+    all_branches: true

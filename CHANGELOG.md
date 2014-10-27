@@ -3,8 +3,10 @@
 ## 1.0.0 - 2014-10-26
 
 * Using the format from http://keepachangelog.com
-* Trimming down the feature set and switching back to bash. This makes chag
-  much simpler to install and does not require any dependencies.
+* Trimming down the feature set and switching back to bash instead of Python.
+  This makes chag much simpler to install and does not require any
+  dependencies.
+* Simplified by removing `chag new`, `chag append`, and `chag get`.
 
 ## 0.5.0 - 2014-08-16
 
