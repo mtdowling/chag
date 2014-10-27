@@ -135,7 +135,8 @@ Outputs the contents of a changelog entry.
 
     Options:
       --file     Path to changelog. Defaults to CHANGELOG.md
-      --trim     Boolean option that, when passed, strips leading and trailing WS.
+      --notrim   Boolean option. When passed disable trimming leading and trailing
+                 newlines from the changelog entry contents output.
       --tag      Tag version string to parse. Defaults to the latest.
       --help     Displays this message.
 
@@ -154,7 +155,7 @@ Creates an annotated git tag from a changelog entry.
     Options:
       --file      Path to changelog. Defaults to CHANGELOG.md
       --tag       Tag version string to parse. Defaults to the latest.
-      --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
+      --addv      Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
       --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
                   key.
       --force|-f  Delete an existing tag if present.

@@ -8,7 +8,7 @@
 set -e
 
 # Clear out the variables used in the script
-unset COMMAND FILENAME TAG SIGN FORCE ADDV TRIM
+unset COMMAND FILENAME TAG SIGN FORCE ADDV NOTRIM
 # Tag heading regular expressions
 HEADING_START='## .+'
 
@@ -45,7 +45,8 @@ is parsed.
 
 Options:
   --file     Path to changelog. Defaults to CHANGELOG.md
-  --trim     Boolean option that, when passed, strips leading and trailing WS.
+  --notrim   Boolean option. When passed disable trimming leading and trailing
+             newlines from the changelog entry contents output.
   --tag      Tag version string to parse. Defaults to the latest.
   --help     Displays this message.
 
@@ -62,8 +63,7 @@ tag based on the changelog entry.
 
 Options:
   --file      Path to changelog. Defaults to CHANGELOG.md
-  --tag       Tag version string to parse. Defaults to the latest.
-  --add-v     Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
+  --addv      Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
   --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
               key.
   --force|-f  Delete an existing tag if present.
@@ -179,9 +179,9 @@ parse_options() {
     case "$opt" in
       --file) FILENAME=${1:?"--file cannot be empty"}; shift;;
       --tag) TAG=${1:?"--tag cannot be empty"}; shift;;
-      --trim) TRIM=1 ;;
+      --notrim) NOTRIM=1 ;;
       --debug) DEBUG=1 ;;
-      --add-v) ADDV=1 ;;
+      --addv) ADDV=1 ;;
       --sign|-s) SIGN="--sign" ;;
       --force|-f) FORCE="--force" ;;
       --*) die "Unknown option '$opt'" ;;
@@ -195,27 +195,33 @@ parse_options() {
 
 # Gets the contents of a changelog entry
 contents() {
-  if [ -z "$TRIM" ]; then
-    get_changelog_entry "$TAG"
+  if [ -z "$NOTRIM" ]; then
+    get_trimmed_entry "$TAG"
   else
-    get_changelog_entry "$TAG" | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba'
+    get_changelog_entry "$TAG"
   fi
 }
 
 tag() {
-
   `git diff --quiet HEAD` || die 'Working directory not clean'
+  TAG=$(latest)
+  contents_cmd="get_trimmed_entry"
+  (entries | grep -q $TAG) || die "[FAILURE] $TAG not found in $FILENAME"
 
-  local contents_cmd="get_changelog_entry $TAG"
+  if [ "$TAG" == "Unreleased" ]; then
+    die 'Not tagging an Unreleased tag. Please check your changelog file.'
+  fi
 
   # Prepend a "v" if required or just use the provided TAG argument.
   local real_tag="$TAG"
-  if [ -z "$ADDV" ]; then
+  if [ ! -z "$ADDV" ]; then
     local real_tag="v${real_tag}"
   fi
 
   # Run the command and get the exit code
   local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
+  # Strip extra spaces from the command
+  cmd=$(echo $cmd | sed 's/\s+/\s/')
 
   if [ ! -z "$DEBUG" ]; then
     debug "Tagging $real_tag with the following annotation:\n"
@@ -223,8 +229,7 @@ tag() {
     debug "Running git command: $cmd"
   fi
 
-  (entries | grep -q $TAG) || die "[FAILURE] $TAG not found in $FILENAME"
-  ($contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
+  (contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
@@ -284,6 +289,11 @@ get_changelog_entry() {
     local len=$(cat $FILENAME | wc -l)
     cat $FILENAME | tail -n $(($len - $found_line))
   fi
+}
+
+# Gets a trimmed changelog entry
+get_trimmed_entry() {
+  get_changelog_entry "$1" | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba'
 }
 
 # Prints each heading "line_number:line" from the changelog separated w/ "\n"
