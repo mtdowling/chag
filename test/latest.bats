@@ -22,7 +22,7 @@ load test_helper
 
 @test "latest shows latest tag" {
   setup_changelog
-  run ./chag latest $CHNGFILE
+  run ./chag latest --file $CHNGFILE
   delete_changelog
   [ $status -eq 0 ]
   [ "${lines[0]}" == "0.0.2" ]

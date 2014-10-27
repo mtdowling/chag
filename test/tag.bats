@@ -16,33 +16,15 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
 
-@test "tag requires a FILENAME" {
-  run ./chag tag
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : ".* tag requires a FILENAME") -ne 0 ]
-}
-
 @test "tag ensures FILENAME exists" {
-  run ./chag tag /path/to/does/not/exist 0.0.1
+  run ./chag tag --file /path/to/does/not/exist 0.0.1
   [ $status -eq 1 ]
   [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
 }
 
-@test "tag requires a TAG" {
-  run ./chag tag CHANGELOG.rst
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : ".* tag requires a TAG") -ne 0 ]
-}
-
-@test "tag ensures parse succeeds" {
-  run ./chag tag CHANGELOG.rst 999.999.999
-  [ $status -eq 1 ]
-  [ "${lines[0]}" == "[FAILURE] 999.999.999 not found in CHANGELOG.rst" ]
-}
-
 @test "Tags with annotation and specific tag" {
   setup_repo
-  run $chagcmd tag --add-v CHANGELOG.rst 0.0.1
+  run $chagcmd tag --addv --file CHANGELOG.rst
   [ $status -eq 0 ]
   [ "${lines[0]}" == '[SUCCESS] Tagged v0.0.1' ]
   run git tag -l -n1 v0.0.1
@@ -52,9 +34,9 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   delete_repo
 }
 
-@test "Tags with annotation and latest tag" {
+@test "Tags debug output" {
   setup_repo
-  run $chagcmd tag --debug CHANGELOG.rst latest
+  run $chagcmd tag --debug --file CHANGELOG.rst
   [ $status -eq 0 ]
   [ "${lines[0]}" == 'Tagging 0.0.2 with the following annotation:' ]
   [ "${lines[1]}" == '===[ BEGIN ]===' ]
@@ -73,7 +55,7 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   setup_repo
   run $chagcmd tag CHANGELOG.rst 0.0.2
   [ $status -eq 0 ]
-  run $chagcmd tag --force CHANGELOG.rst 0.0.2
+  run $chagcmd tag --force --file CHANGELOG.rst --tag 0.0.2
   [ $status -eq 0 ]
   [ "${lines[0]}" == '[SUCCESS] Tagged 0.0.2' ]
   cd -

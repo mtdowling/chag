@@ -19,7 +19,7 @@
 }
 
 @test "Invalid options fail" {
-  run ./chag parse --foo
+  run ./chag contents --foo
   [ $status -eq 1 ]
   [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
 }
