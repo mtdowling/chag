@@ -276,7 +276,7 @@ get_changelog_entry() {
   if [ -z "$1" ]; then
     local found_line=$(find_first_entry)
   else
-    local found_line=$(find_specific_entry $TAG)
+    local found_line=$(find_specific_entry $1)
   fi
 
   # Ensure that the heading was found
