@@ -7,19 +7,17 @@
 
 set -e
 
-# Clear out the variables used in the script
-unset COMMAND FILENAME TAG SIGN FORCE ADDV NOTRIM
-# Tag heading regular expressions
-HEADING_START='## .+'
+# Clear out script variables
+unset FILENAME TAG SIGN FORCE ADDV
 
 version() {
-  echo "chag 1.0.0"
+  echo "chag 1.1.0"
 }
 
 usage() {
   version
   cat <<EOT
-Usage: chag [OPTIONS] COMMAND [ARGS]
+Usage: chag <command> [<options>] [<args>]
 
 Options:
   --help     Displays this message.
@@ -37,16 +35,14 @@ EOT
 
 contents_usage() {
   cat <<EOT
-Usage: chag contents [OPTIONS]
+Usage: chag contents [--help] [--file <path>] [--tag <tag>]
 
 Outputs the contents of a changelog entry from a changelog file. If no
-``--tag`` option is provided, then the top-most entry in the changelog
-is parsed.
+--tag option is provided, then the top-most entry in the changelog is
+parsed.
 
 Options:
   --file     Path to changelog. Defaults to CHANGELOG.md
-  --notrim   Boolean option. When passed disable trimming leading and trailing
-             newlines from the changelog entry contents output.
   --tag      Tag version string to parse. Defaults to the latest.
   --help     Displays this message.
 
@@ -56,18 +52,16 @@ EOT
 
 tag_usage() {
   cat <<EOT
-Usage: chag tag [OPTIONS]
+Usage: chag tag [--help] [--file <path>] [--addv] [-s|--sign] [-f|--force]
 
 Parses a changelog entry for the given tag and creates an annotated git
-tag based on the changelog entry.
+tag based on the changelog entry version and contents.
 
 Options:
   --file      Path to changelog. Defaults to CHANGELOG.md
   --addv      Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
-  --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
-              key.
+  --sign|-s   Make a GPG-signed tag, using the default git e-mail address key.
   --force|-f  Delete an existing tag if present.
-  --debug     Output debug information while executing.
   --help      Displays this message.
 
 EOT
@@ -76,7 +70,7 @@ EOT
 
 latest_usage() {
   cat <<EOT
-Usage: chag latest [OPTIONS]
+Usage: chag latest [--help] [--file <path>]
 
 Get the latest changelog entry version from a CHANGELOG.
 
@@ -90,9 +84,9 @@ EOT
 
 entries_usage() {
   cat <<EOT
-Usage: chag entries [OPTIONS]
+Usage: chag entries [--help] [--file <path>]
 
-Lists all of the tag numbers in a changelog file, separated by new lines.
+Lists all of the version numbers in a changelog file, separated by new lines.
 
 Options:
   --file    Path to changelog. Defaults to CHANGELOG.md
@@ -104,7 +98,7 @@ EOT
 
 update_usage() {
   cat <<EOT
-Usage: chag update [OPTIONS] TAG
+Usage: chag update [--help] [--file <path>] TAG
 
 Updates the top-most changelog entry with the given version number in
 the header of the entry and updates the entry date.
@@ -126,87 +120,17 @@ die() {
   exit 1
 }
 
-# Outputs debug information if DEBUG was passed
-debug() {
-  [ -z "$DEBUG" ] || printf "$@\n" >&2
-}
-
-# Extracts options and arguments, validates, and calls a subcommand
-main() {
-  # Show help if no options or arguments are provided
-  [ $# -eq 0 ] && set -- --help
-  [ "$1" == '--help' ] && usage
-  [ "$1" == '--version' ] && version && exit 0
-
-  COMMAND="$1"
-  shift
-
-  case "$COMMAND" in
-    contents|tag|latest|entries|update)
-      # Each command has a "command"_usage function
-      [ "$1" == "--help" ] && "${COMMAND}_usage"
-      parse_options $@
-      $COMMAND
-      ;;
-    *)
-      die "Unknown command '$COMMAND'." \
-          "Available commands: contents|tag|latest|entries"
-      ;;
-  esac
-}
-
-# Ensure the TAG argument is set for specific commands.
-check_tag_argument() {
-  case "$COMMAND" in
-    update)
-      TAG=${1:?"$COMMAND requires a TAG"}
-  esac
-}
-
-# Find the changelog file
-find_changelog() {
-  if [ -z "$FILENAME" ]; then
-    FILENAME=`pwd`"/CHANGELOG.md"
-  fi
-  [ -f "$FILENAME" ] || die "File not found: $FILENAME"
-}
-
-# Parses the provided options, FILENAME, and TAG
-parse_options() {
-  while [ $# -gt 0 ]; do
-    opt="$1"
-    shift
-    case "$opt" in
-      --file) FILENAME=${1:?"--file cannot be empty"}; shift;;
-      --tag) TAG=${1:?"--tag cannot be empty"}; shift;;
-      --notrim) NOTRIM=1 ;;
-      --debug) DEBUG=1 ;;
-      --addv) ADDV=1 ;;
-      --sign|-s) SIGN="--sign" ;;
-      --force|-f) FORCE="--force" ;;
-      --*) die "Unknown option '$opt'" ;;
-      *) break ;;
-    esac
-  done
-
-  check_tag_argument $opt
-  find_changelog
-}
-
 # Gets the contents of a changelog entry
 contents() {
-  if [ -z "$NOTRIM" ]; then
-    get_trimmed_entry "$TAG" || exit $?
-  else
-    get_changelog_entry "$TAG" || exit $?
-  fi
+  TAG=${TAG:=$(latest)}
+  get_entry $TAG
 }
 
 tag() {
-  `git diff --quiet HEAD` || die 'Working directory not clean'
   TAG=$(latest)
-  contents_cmd="get_trimmed_entry"
+  `git diff --quiet HEAD` || die '[FAILURE] Working directory not clean'
   (entries | grep -q $TAG) || die "[FAILURE] $TAG not found"
+  contents_cmd="get_entry $TAG"
 
   if [ "$TAG" == "Unreleased" ]; then
     die 'Not tagging an Unreleased tag. Please check your changelog file.'
@@ -222,20 +146,19 @@ tag() {
   local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
   # Strip extra spaces from the command
   cmd=$(echo $cmd | sed 's/\s+/\s/')
-
-  if [ ! -z "$DEBUG" ]; then
-    debug "Tagging $real_tag with the following annotation:\n"
-    debug "===[ BEGIN ]===\n$($contents_cmd)\n===[  END  ]===\n"
-    debug "Running git command: $cmd"
-  fi
-
+  echo "Tagging $real_tag with the following annotation:"
+  echo "===[ BEGIN ]==="
+  $contents_cmd
+  echo "===[  END  ]==="
+  echo "Running git command: $cmd"
   ($contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
 # Updates the top changelog entry with the provided version and today's date
 update() {
-  start=$(find_first_entry)
+  TAG=${1:?"update requires a TAG"}
+  start=$(find_entry $(latest))
   local replacement="## $TAG - $(date +%Y-%m-%d)"
   perl -i -pe "s/.*/$replacement/ if \$.==${start}" $FILENAME
   echo "[SUCCESS] Updated ${FILENAME} with ${TAG}"
@@ -248,64 +171,76 @@ entries() {
 
 # Prints each heading "line_number:line" from the changelog separated w/ "\n"
 entries_and_lines() {
-  local pattern="^($HEADING_START)"
   # Find each entry line number and version, separated by colons.
-  grep -n -E -e "$pattern" $FILENAME \
+  # Remove the H2 markdown syntax, don't take the date, and trim the string.
+  grep -n -E -e '^##\s+.+' $FILENAME \
     | sed -E 's/## //' \
     | cut -d '-' -f 1 \
     | sed -e 's/^ *//' -e 's/ *$//'
 }
 
-# Gets the latest version number from the changelog
+# Gets the latest version number from the changelog.
 latest() {
   entries | head -n1 | cut -d ':' -f 1
 }
 
-# Get the first tag line number
-find_first_entry() {
-  entries_and_lines | head -n1 | cut -d ':' -f 1
+# Get the line number of a specific changelog entry.
+find_entry() {
+  result=$(entries_and_lines | grep "$1" | cut -d ':' -f 1)
+  [ "" == "$result" ] && die "[FAILURE] Tag not found"
+  echo $result
 }
 
-# Get a specific tag line number
-find_specific_entry() {
-  entries_and_lines | grep "$1" | cut -d ':' -f 1
+# Get the line number of the next entry after the given entry.
+find_next_entry() {
+  content=$(entries_and_lines)
+  echo $(trim "${content#*$1}") | head -n1 | cut -d ':' -f 1
 }
 
-# Get the contents of a specific changelog entry by tag name
-get_changelog_entry() {
-  if [ -z "$1" ]; then
-    local found_line=$(find_first_entry)
-  else
-    local found_line=$(find_specific_entry $1)
+# Get the contents of an entry
+get_entry() {
+  found_line=$(find_entry $TAG)
+  end_line=$(($(find_next_entry $TAG) - 1))
+  if [ $end_line -eq -1 ]; then
+    end_line=$(wc -l < $FILENAME)
   fi
-
-  # Ensure that the heading was found
-  [ "$found_line" == "" ] && die "[FAILURE] Tag not found"
-  # First line in the file of the changelog header.
-  local start_line=$(($found_line + 1))
-  # Find the length of the section
-  local length=$(tail -n +$start_line "$FILENAME" \
-                 | grep -n -E "^$HEADING_START" \
-                 | head -n1 \
-                 | cut -d ':' -f 1)
-  # Remove the extra line
-  length=$(($length - 1))
-
-  if [ "$length" -gt 0 ]; then
-    # This is NOT at the end of the file
-    cat $FILENAME | head -n $(($length + $found_line)) | tail -n $length
-  else
-    # This is at the end of the file
-    local len=$(cat $FILENAME | wc -l)
-    cat $FILENAME | tail -n $(($len - $found_line))
-  fi
+  trim "$(sed -n "$((found_line + 1))","$end_line"p < $FILENAME)"
 }
 
-# Gets a trimmed changelog entry
-get_trimmed_entry() {
-  get_changelog_entry "$1" | sed -e :a -e '/./,$!d;/^\n*$/{$d;N;};/\n$/ba'
-  # PIPESTATUS tells us the exit status of each command in the previous pipe.
-  [ ${PIPESTATUS[0]} -eq 0 ] || exit 1
+# Removes leading and trailing whitespace from the provided input.
+trim() {
+  local var=$@
+  var="${var#"${var%%[![:space:]]*}"}"
+  var="${var%"${var##*[![:space:]]}"}"
+  echo "$var"
 }
 
-main "$@"
+# Show help if no options are provided or if "--help" is passed.
+[ $# -eq 0 ] || [ "$1" == "--help" ] && usage
+# Show the version if just --version is provided.
+[ "$1" == '--version' ] && version && exit 0
+# Ensure a valid command was passed.
+VALID="contents|tag|latest|entries|update"
+[[ $VALID == *$1* ]] || die "Available commands: ${VALID}"
+
+COMMAND="$1"; shift
+while [ $# -gt 0 ]; do
+  opt="$1"
+  shift
+  case "$opt" in
+    --help) "${COMMAND}_usage";;
+    --file) FILENAME=${1:?"--file cannot be empty"}; shift;;
+    --tag) TAG=${1:?"--tag cannot be empty"}; shift;;
+    --addv) ADDV=1 ;;
+    --sign|-s) SIGN="--sign" ;;
+    --force|-f) FORCE="--force" ;;
+    --*) die "Unknown option '$opt'" ;;
+    *) break ;;
+  esac
+done
+
+# Find the default changelog and ensure the changelog file exits.
+FILENAME=${FILENAME:=`pwd`"/CHANGELOG.md"}
+[ -f "$FILENAME" ] || die "File not found: $FILENAME"
+
+$COMMAND $opt $@

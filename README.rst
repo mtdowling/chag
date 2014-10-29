@@ -108,7 +108,7 @@ Usage
 
 ::
 
-    Usage: chag [OPTIONS] COMMAND [ARGS]
+    Usage: chag <command> [<options>] [<args>]
 
     Options:
       --help     Displays this message.
@@ -127,16 +127,14 @@ Outputs the contents of a changelog entry.
 
 ::
 
-    Usage: chag contents [OPTIONS]
+    Usage: chag contents [--help] [--file <path>] [--tag <tag>]
 
     Outputs the contents of a changelog entry from a changelog file. If no
-    ``--tag`` option is provided, then the top-most entry in the changelog
-    is parsed.
+    --tag option is provided, then the top-most entry in the changelog is
+    parsed.
 
     Options:
       --file     Path to changelog. Defaults to CHANGELOG.md
-      --notrim   Boolean option. When passed disable trimming leading and trailing
-                 newlines from the changelog entry contents output.
       --tag      Tag version string to parse. Defaults to the latest.
       --help     Displays this message.
 
@@ -147,33 +145,17 @@ Creates an annotated git tag from a changelog entry.
 
 ::
 
-    Usage: chag tag [OPTIONS]
+    Usage: chag tag [--help] [--file <path>] [--addv] [-s|--sign] [-f|--force]
 
     Parses a changelog entry for the given tag and creates an annotated git
     tag based on the changelog entry.
 
     Options:
       --file      Path to changelog. Defaults to CHANGELOG.md
-      --tag       Tag version string to parse. Defaults to the latest.
       --addv      Pass to prepend a "v" to the git tag (e.g., "v2.0.1")
-      --sign|-s   Make a GPG-signed tag, using the default git e-mail address's
-                  key.
+      --sign|-s   Make a GPG-signed tag, using the default git e-mail address key.
       --force|-f  Delete an existing tag if present.
-      --debug     Output debug information while executing.
       --help      Displays this message.
-
-Executing ``chag tag`` will have output similar to the following:
-
-::
-
-    ./chag tag --debug
-    Parsed the 0.0.1 changelog entry from CHANGELOG.rst:
-      tag: 0.0.1, date: 2014-09-10, tmpfile: /var/folders/2d//T/tag-0.0.1.XXXXXXXXXX.QjNa2HSO
-    Running git tag -a -F /var/folders/2d//T/tag-0.0.1.XXXXXXXXXX.QjNa2HSO
-    [SUCCESS] Tagged the 0.0.1 release
-    Tagged 0.0.1 with the following annotation:
-
-    Initial release.
 
 latest
 ~~~~~~
@@ -182,7 +164,7 @@ Get the latest changelog entry version from a CHANGELOG.
 
 ::
 
-    Usage: chag latest [OPTIONS]
+    Usage: chag latest [--help] [--file <path>]
 
     Get the latest changelog entry version from a CHANGELOG.
 
@@ -197,9 +179,9 @@ List the changelog versions available in a CHANGELOG.
 
 ::
 
-    Usage: chag entries [OPTIONS]
+    Usage: chag entries [--help] [--file <path>]
 
-    Lists all of the tag numbers in a changelog file, separated by new lines.
+    Lists all of the version numbers in a changelog file, separated by new lines.
 
     Options:
       --file    Path to changelog. Defaults to CHANGELOG.md
@@ -212,14 +194,14 @@ Replaces the top-most changelog entry heading with the provided version number.
 
 ::
 
-    Usage: chag update [OPTIONS] TAG
+    Usage: chag update [--help] [--file <path>] TAG
 
-      Updates the top-most changelog entry with the given version number in
-      the header of the entry and updates the entry date.
+    Updates the top-most changelog entry with the given version number in
+    the header of the entry and updates the entry date.
 
-      Options:
-        --file    Path to changelog. Defaults to CHANGELOG.md
-        --help    Displays this message.
+    Options:
+      --file    Path to changelog. Defaults to CHANGELOG.md
+      --help    Displays this message.
 
-      Arguments:
-        TAG       Version number to set on the entry.
+    Arguments:
+      TAG       Version number to set on the entry.

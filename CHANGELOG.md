@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.0 - 2014-10-28
+
+* Removed the `--debug` option from the tag command.
+* Removed the `--notrim` option from the contents command.
+* Simplified a great deal and updated docs.
+
 ## 1.0.0 - 2014-10-26
 
 * Using the format from http://keepachangelog.com

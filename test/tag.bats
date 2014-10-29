@@ -24,7 +24,7 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 
 @test "Tags debug output" {
   setup_repo
-  run $chagcmd tag --debug --file CHANGELOG.md
+  run $chagcmd tag --file CHANGELOG.md
   [ $status -eq 0 ]
   [ "${lines[0]}" == 'Tagging 0.0.2 with the following annotation:' ]
   [ "${lines[1]}" == '===[ BEGIN ]===' ]
@@ -41,11 +41,11 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
 
 @test "Can force a tag" {
   setup_repo
-  run $chagcmd tag CHANGELOG.md 0.0.2
+  run $chagcmd tag --file CHANGELOG.md 0.0.2
   [ $status -eq 0 ]
   run $chagcmd tag --force --file CHANGELOG.md --tag 0.0.2
   [ $status -eq 0 ]
-  [ "${lines[0]}" == '[SUCCESS] Tagged 0.0.2' ]
+  [ "${lines[5]}" == '[SUCCESS] Tagged 0.0.2' ]
   cd -
   delete_repo
 }

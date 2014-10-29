@@ -29,8 +29,8 @@ load test_helper
 @test "updates inline" {
   setup_changelog_tbd
   run ./chag update --file $CHNGFILE 9.9.9
-  delete_changelog
   [ $status -eq 0 ]
+  delete_changelog
   date=$(date +%Y-%m-%d)
   [ "${lines[0]}" == "[SUCCESS] Updated ${CHNGFILE} with 9.9.9" ]
 }

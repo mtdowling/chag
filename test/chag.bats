@@ -27,5 +27,5 @@
 @test "Invalid commands fail" {
   run ./chag foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Unknown command") -ne 0 ]
+  [ $(expr "${lines[0]}" : "Available commands") -ne 0 ]
 }
