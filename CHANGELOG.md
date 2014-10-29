@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Unreleased
+
+* Auto-detect CHANGELOG and CHANGELOG.md when no `--file` is provided.
+* Adding missing `update` usage information to `chag --help`.
+
 ## 1.1.0 - 2014-10-28
 
 * Removed the `--debug` option from the tag command.
