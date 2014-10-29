@@ -122,15 +122,13 @@ die() {
 
 # Gets the contents of a changelog entry
 contents() {
-  TAG=${TAG:=$(latest)}
-  get_entry $TAG
+  get_entry ${TAG:=$(latest)}
 }
 
 tag() {
   TAG=$(latest)
   `git diff --quiet HEAD` || die '[FAILURE] Working directory not clean'
   (entries | grep -q $TAG) || die "[FAILURE] $TAG not found"
-  contents_cmd="get_entry $TAG"
 
   if [ "$TAG" == "Unreleased" ]; then
     die 'Not tagging an Unreleased tag. Please check your changelog file.'
@@ -148,10 +146,10 @@ tag() {
   cmd=$(echo $cmd | sed 's/\s+/\s/')
   echo "Tagging $real_tag with the following annotation:"
   echo "===[ BEGIN ]==="
-  $contents_cmd
+  get_entry $TAG
   echo "===[  END  ]==="
   echo "Running git command: $cmd"
-  ($contents_cmd | $cmd) || die "[FAILURE] Failed tagging $real_tag"
+  (get_entry $TAG | $cmd) || die "[FAILURE] Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
