@@ -46,7 +46,7 @@ chag workflow is:
    to update the WIP changelog entry to an actual version number. Substitute
    ``X.Y.Z`` with the version of the next tagged release.
 4. Review the changes and commit them.
-5. Run ``chag tag `` to create an annotated git tag based on the most recent
+5. Run ``chag tag`` to create an annotated git tag based on the most recent
    changelog entry found in your changelog file.
 
 Installation
@@ -119,6 +119,7 @@ Usage
       entries    List all versions in a changelog file.
       latest     Get the latest tag in a changelog.
       tag        Create an annotated git tag based on a changelog entry.
+      update     Updates the version and date of the most recent changelog entry.
 
 contents
 ~~~~~~~~
@@ -190,14 +191,12 @@ List the changelog versions available in a CHANGELOG.
 update
 ~~~~~~
 
-Replaces the top-most changelog entry heading with the provided version number.
+Updates the version and date of the most recent changelog entry.
 
 ::
-
     Usage: chag update [--help] [--file <path>] TAG
 
-    Updates the top-most changelog entry with the given version number in
-    the header of the entry and updates the entry date.
+    Updates the version and date of the most recent changelog entry.
 
     Options:
       --file    Path to changelog. Defaults to CHANGELOG.md

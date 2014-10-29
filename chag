@@ -28,7 +28,7 @@ Commands:
   entries    List all versions in a changelog file.
   latest     Get the latest tag in a changelog.
   tag        Create an annotated git tag based on a changelog entry.
-
+  update     Updates the version and date of the most recent changelog entry.
 EOT
   exit 0
 }
@@ -45,7 +45,6 @@ Options:
   --file     Path to changelog. Defaults to CHANGELOG.md
   --tag      Tag version string to parse. Defaults to the latest.
   --help     Displays this message.
-
 EOT
   exit 0
 }
@@ -63,7 +62,6 @@ Options:
   --sign|-s   Make a GPG-signed tag, using the default git e-mail address key.
   --force|-f  Delete an existing tag if present.
   --help      Displays this message.
-
 EOT
   exit 0
 }
@@ -77,7 +75,6 @@ Get the latest changelog entry version from a CHANGELOG.
 Options:
   --file    Path to changelog. Defaults to CHANGELOG.md
   --help    Displays this message.
-
 EOT
   exit 0
 }
@@ -91,7 +88,6 @@ Lists all of the version numbers in a changelog file, separated by new lines.
 Options:
   --file    Path to changelog. Defaults to CHANGELOG.md
   --help    Displays this message.
-
 EOT
   exit 0
 }
@@ -100,8 +96,7 @@ update_usage() {
   cat <<EOT
 Usage: chag update [--help] [--file <path>] TAG
 
-Updates the top-most changelog entry with the given version number in
-the header of the entry and updates the entry date.
+Updates the version and date of the most recent changelog entry.
 
 Options:
   --file    Path to changelog. Defaults to CHANGELOG.md
@@ -109,7 +104,6 @@ Options:
 
 Arguments:
   TAG       Version number to set on the entry.
-
 EOT
   exit 0
 }
