@@ -11,7 +11,7 @@ load test_helper
 @test "Invalid options fail" {
   run ./chag entries --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
+  [ "${lines[0]}" == "[FAILURE] Unknown option '--foo'" ]
 }
 
 @test "lists tag versions from changelog" {

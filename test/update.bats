@@ -8,12 +8,6 @@ load test_helper
   [ $(expr "${lines[0]}" : "Usage: chag update") -ne 0 ]
 }
 
-@test "Invalid options fail" {
-  run ./chag update --foo
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
-}
-
 @test "update requires a TAG" {
   run ./chag update
   [ $status -eq 1 ]
@@ -23,7 +17,7 @@ load test_helper
 @test "update ensures FILENAME exists" {
   run ./chag update --file /path/to/does/not/exist FOO
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
+  [ "${lines[0]}" ==  "[FAILURE] File not found: /path/to/does/not/exist" ]
 }
 
 @test "updates inline" {

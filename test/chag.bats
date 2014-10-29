@@ -21,11 +21,11 @@
 @test "Invalid options fail" {
   run ./chag contents --foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
+  [ "${lines[0]}" == "[FAILURE] Unknown option '--foo'" ]
 }
 
 @test "Invalid commands fail" {
   run ./chag foo
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Available commands") -ne 0 ]
+  [ "${lines[0]}" == "[FAILURE] Available commands: contents|tag|latest|entries|update" ]
 }

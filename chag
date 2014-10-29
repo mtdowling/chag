@@ -116,7 +116,7 @@ EOT
 
 # exits with an error message
 die() {
-  echo "$@" 1>&2
+  echo "[FAILURE] $@" 1>&2
   exit 1
 }
 
@@ -127,8 +127,8 @@ contents() {
 
 tag() {
   TAG=$(latest)
-  `git diff --quiet HEAD` || die '[FAILURE] Working directory not clean'
-  (entries | grep -q $TAG) || die "[FAILURE] $TAG not found"
+  `git diff --quiet HEAD` || die 'Working directory not clean'
+  (entries | grep -q $TAG) || die "$TAG not found"
 
   if [ "$TAG" == "Unreleased" ]; then
     die 'Not tagging an Unreleased tag. Please check your changelog file.'
@@ -149,7 +149,7 @@ tag() {
   get_entry $TAG
   echo "===[  END  ]==="
   echo "Running git command: $cmd"
-  (get_entry $TAG | $cmd) || die "[FAILURE] Failed tagging $real_tag"
+  (get_entry $TAG | $cmd) || die "Failed tagging $real_tag"
   echo "[SUCCESS] Tagged $real_tag"
 }
 
@@ -185,7 +185,7 @@ latest() {
 # Get the line number of a specific changelog entry.
 find_entry() {
   result=$(entries_and_lines | grep "$1" | cut -d ':' -f 1)
-  [ "" == "$result" ] && die "[FAILURE] Tag not found"
+  [ "" == "$result" ] && die "Tag not found"
   echo $result
 }
 
@@ -197,8 +197,8 @@ find_next_entry() {
 
 # Get the contents of an entry
 get_entry() {
-  found_line=$(find_entry $TAG)
-  end_line=$(($(find_next_entry $TAG) - 1))
+  found_line=$(find_entry $1)
+  end_line=$(($(find_next_entry $1) - 1))
   if [ $end_line -eq -1 ]; then
     end_line=$(wc -l < $FILENAME)
   fi

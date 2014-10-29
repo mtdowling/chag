@@ -10,16 +10,10 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   [ $(expr "${lines[0]}" : "Usage: chag tag") -ne 0 ]
 }
 
-@test "Invalid options fail" {
-  run ./chag tag --foo
-  [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "Unknown option") -ne 0 ]
-}
-
 @test "tag ensures FILENAME exists" {
   run ./chag tag --file /path/to/does/not/exist 0.0.1
   [ $status -eq 1 ]
-  [ $(expr "${lines[0]}" : "File not found: /path/to/does/not/exist") -ne 0 ]
+  [ "${lines[0]}" == "[FAILURE] File not found: /path/to/does/not/exist" ]
 }
 
 @test "Tags debug output" {
