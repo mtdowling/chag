@@ -194,6 +194,7 @@ update
 Updates the version and date of the most recent changelog entry.
 
 ::
+
     Usage: chag update [--help] [--file <path>] TAG
 
     Updates the version and date of the most recent changelog entry.
