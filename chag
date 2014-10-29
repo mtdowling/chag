@@ -226,8 +226,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# Find the default changelog and ensure the changelog file exits.
-FILENAME=${FILENAME:=`pwd`"/CHANGELOG.md"}
+# Find the default changelog if needed.
+if [ -z "$FILENAME" ]; then
+  FILENAME=`pwd`"/CHANGELOG.md"
+  [ -f "$FILENAME" ] || FILENAME=`pwd`"/CHANGELOG"
+fi
 [ -f "$FILENAME" ] || die "File not found: $FILENAME"
 
 $COMMAND $opt $@
