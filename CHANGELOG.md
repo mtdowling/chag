@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 1.1.1 - 2015-02-15
 
 * Auto-detect CHANGELOG and CHANGELOG.md when no `--file` is provided.
 * Adding missing `update` usage information to `chag --help`.
