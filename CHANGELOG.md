@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.2 - 2015-05-19
+
+* Fixed an issue where searching for a tag using grep was matching dots as a
+  regular expression dot, which provided false positives. Dots in tag names
+  are now escaped when searching for tags.
+
 ## 1.1.1 - 2015-02-15
 
 * Auto-detect CHANGELOG and CHANGELOG.md when no `--file` is provided.

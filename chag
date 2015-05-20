@@ -11,7 +11,7 @@ set -e
 unset FILENAME TAG SIGN FORCE ADDV
 
 version() {
-  echo "chag 1.1.0"
+  echo "chag 1.1.2"
 }
 
 usage() {
