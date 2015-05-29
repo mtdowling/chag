@@ -11,7 +11,7 @@ set -e
 unset FILENAME TAG SIGN FORCE ADDV
 
 version() {
-  echo "chag 1.1.2"
+  echo "chag 1.1.3"
 }
 
 usage() {
@@ -162,7 +162,7 @@ entries_and_lines() {
   # Remove the H2 markdown syntax, don't take the date, and trim the string.
   grep -n -E -e '^##\s+.+' $FILENAME \
     | sed -E 's/## //' \
-    | cut -d '-' -f 1 \
+    | cut -d ' ' -f 1 \
     | sed -e 's/^ *//' -e 's/ *$//'
 }
 
@@ -173,7 +173,7 @@ latest() {
 
 # Get the line number of a specific changelog entry.
 find_entry() {
-  result=$(entries_and_lines | grep "${1//./\\.}" | cut -d ':' -f 1)
+  result=$(entries_and_lines | grep -E "^\d+:${1//./\\.}$" | cut -d ':' -f 1)
   [ "" == "$result" ] && die "Tag not found"
   echo $result
 }
