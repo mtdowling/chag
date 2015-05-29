@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.1.3 - 2015-05-29
+
+* Fixed an issue when searching for a tag using grep was matching tags that
+  started with the same number. This could cause issues when you have tags
+  like `3.0.0` and `3.0.0-beta.1`. Searching for tags now uses a more exact
+  search in order to prevent these types of collisions.
+
 ## 1.1.2 - 2015-05-19
 
 * Fixed an issue where searching for a tag using grep was matching dots as a
