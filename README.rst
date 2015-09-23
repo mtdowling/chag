@@ -5,10 +5,6 @@ chag
 *chag* (pronounced ``'chag``) stands for "changelog tag". It allows you to
 use your project's changelog as the canonical source of change data.
 
-.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
-   :target: https://travis-ci.org/mtdowling/chag
-   :alt: Build status
-
 What does it do?
 ----------------
 
@@ -205,3 +201,8 @@ Updates the version and date of the most recent changelog entry.
 
     Arguments:
       TAG       Version number to set on the entry.
+
+
+.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
+   :target: https://travis-ci.org/mtdowling/chag
+   :alt: Build status
