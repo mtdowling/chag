@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.4 - 2017-01-06
+
+* Fixed a problem with GNU grep where `chag contents` was unable to find
+  entries.
+* Now vendoring bats when testing.
+
 ## 1.1.3 - 2015-05-29
 
 * Fixed an issue when searching for a tag using grep was matching tags that
