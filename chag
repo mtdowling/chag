@@ -173,7 +173,7 @@ latest() {
 
 # Get the line number of a specific changelog entry.
 find_entry() {
-  result=$(entries_and_lines | grep -E "^\d+:${1//./\\.}$" | cut -d ':' -f 1)
+  result=$(entries_and_lines | grep -E ":${1//./\\.}$" | cut -d ':' -f 1)
   [ "" == "$result" ] && die "Tag not found"
   echo $result
 }
