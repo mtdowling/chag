@@ -1,5 +1,5 @@
 test:
-	bats test/
+	test/bats/libexec/bats test/
 
 deploy:
 	chag tag
