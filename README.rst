@@ -37,7 +37,10 @@ chag workflow is:
 
 1. As you develop changes, add to your changelog file under a changelog
    section titled ``Unreleased``.
+    * You can run ``chag create`` to create a ``CHANGELOG.md`` file if one does not exist.
+    * Next, to create a new "Unreleased" entry, run ``chag next``.
 2. As you develop features, append items to your changelog.
+    * You can do this by running ``chag entry --contents <your entry>``
 3. When your work is ready to be released, execute ``chag update X.Y.Z``
    to update the WIP changelog entry to an actual version number. Substitute
    ``X.Y.Z`` with the version of the next tagged release.
@@ -116,6 +119,52 @@ Usage
       latest     Get the latest tag in a changelog.
       tag        Create an annotated git tag based on a changelog entry.
       update     Updates the version and date of the most recent changelog entry.
+      create     Creates a new CHANGELOG.md file with a standard header.
+      entry      Add a quick entry to the current version.
+      next       Create a new unreleased version in changelog file.
+
+next
+----
+
+Create a new unreleased version in changelog file.
+
+::
+
+   Usage: chag next
+
+   Creates a new unreleased version inside of the changelog file.
+
+   Options:
+     --help     Displays this message.
+
+entry
+-----
+
+Add a quick entry to the current version.
+
+::
+
+   Usage: chag entry --contents <contents>
+
+   Creates a new entry inside of the changelog's latest version with --contents as it's body.
+
+   Options:
+     --contents The body of the entry.
+     --help     Displays this message.
+
+create
+------
+
+Creates a new CHANGELOG.md with a standard header (if one does not exist).
+
+::
+
+   Usage: chag create [--help]
+
+   Creates a new CHANGELOG.md file with a changelog header if one does not exist.
+
+   Options:
+     --help     Displays this message.
 
 contents
 ~~~~~~~~
