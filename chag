@@ -38,11 +38,12 @@ EOT
 
 create_usage() {
   cat <<EOT
-Usage: chag create [--help]
+Usage: chag create [--file <filename> ][--help]
 
-Creates a new CHANGELOG.md file with a changelog header if one does not exist.
+Creates a new file named CHANGELOG.md by default with a changelog header, if one does not exist.
 
 Options:
+  --file     Specify a custom changelog filename
   --help     Displays this message.
 EOT
   exit 0
@@ -235,8 +236,7 @@ get_entry() {
 }
 
 create() {
-  FILENAME="CHANGELOG.md"
-  HEADER="# CHANGELOG \n"
+  HEADER="# CHANGELOG\n"
   [ -f "$FILENAME" ] || printf "${HEADER}" >> $FILENAME
 
   exit 0
