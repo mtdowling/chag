@@ -13,3 +13,11 @@ load test_helper
   [ $status -eq 1 ]
   [ "${lines[0]}" == "[FAILURE] Unknown option '--foo'" ]
 }
+
+@test "Creates changelog with appropriate header" {
+  run ./chag create --file $CHNGFILE
+  contents=`head -n 1 $CHNGFILE`
+  delete_changelog
+  [ $status -eq 0 ]
+  [ "$contents" == "# CHANGELOG" ]
+}

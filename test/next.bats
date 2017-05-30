@@ -13,3 +13,10 @@ load test_helper
   [ $status -eq 1 ]
   [ "${lines[0]}" == "[FAILURE] Unknown option '--foo'" ]
 }
+
+@test "creates a next change log" {
+  setup_changelog
+  run ./chag next
+  delete_changelog
+  [ $status -eq 0 ]
+}
