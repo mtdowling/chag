@@ -132,7 +132,7 @@ tag() {
   fi
 
   # Run the command and get the exit code
-  local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
+  local cmd="git tag $SIGN $FORCE -a --cleanup=whitespace -F - $real_tag"
   # Strip extra spaces from the command
   cmd=$(echo $cmd | sed 's/\s+/\s/')
   echo "Tagging $real_tag with the following annotation:"
