@@ -3,8 +3,9 @@ set -e
 
 [ -z "$CHAG_DIR" ] && CHAG_DIR="/usr/local/bin"
 [ -z "$CHAG_VERSION" ] && CHAG_VERSION="master"
+[ -z "$CHAG_VENDOR" ] && CHAG_VENDOR="mtdowling"
 
-CHAG_SOURCE="https://raw.githubusercontent.com/mtdowling/chag/$CHAG_VERSION/chag"
+CHAG_SOURCE="https://raw.githubusercontent.com/$CHAG_VENDOR/chag/$CHAG_VERSION/chag"
 
 echo "=> Downloading chag to '$CHAG_DIR'"
 curl -sS "$CHAG_SOURCE" -o "$CHAG_DIR/chag" || {
