@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.2.0 - 2017-07-23
+
+### Added
+
+* Added command create that creates a new changelog file with the standard header.
+* Added command entry that adds a quick entry to the latest tag in the changelog file.
+* Added command next that creates a new unreleased header in the changelog file.
+
+### Fixed
+
+* When creating a tag the tag annotation does now preserve markdown headers
+  that were previously interpreted by git as comments and therefore stripped.
+
 ## 1.1.4 - 2017-01-06
 
 * Fixed a problem with GNU grep where `chag contents` was unable to find
