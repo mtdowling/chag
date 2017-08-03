@@ -167,7 +167,7 @@ Creates a new CHANGELOG.md with a standard header (if one does not exist).
      --help     Displays this message.
 
 contents
-~~~~~~~~
+--------
 
 Outputs the contents of a changelog entry.
 
@@ -185,7 +185,7 @@ Outputs the contents of a changelog entry.
       --help     Displays this message.
 
 tag
-~~~
+---
 
 Creates an annotated git tag from a changelog entry.
 
@@ -204,7 +204,7 @@ Creates an annotated git tag from a changelog entry.
       --help      Displays this message.
 
 latest
-~~~~~~
+------
 
 Get the latest changelog entry version from a CHANGELOG.
 
@@ -219,7 +219,7 @@ Get the latest changelog entry version from a CHANGELOG.
       --help    Displays this message.
 
 entries
-~~~~~~~
+-------
 
 List the changelog versions available in a CHANGELOG.
 
@@ -234,7 +234,7 @@ List the changelog versions available in a CHANGELOG.
       --help    Displays this message.
 
 update
-~~~~~~
+------
 
 Updates the version and date of the most recent changelog entry.
 
@@ -250,11 +250,6 @@ Updates the version and date of the most recent changelog entry.
 
     Arguments:
       TAG       Version number to set on the entry.
-
-
-.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
-   :target: https://travis-ci.org/mtdowling/chag
-   :alt: Build status
 
 Config file
 -----------
@@ -272,4 +267,8 @@ is executed.
     # pass --sign to chag tag; i.e.:
     # chag tag --sign
     sign=yes
+
+.. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
+   :target: https://travis-ci.org/mtdowling/chag
+   :alt: Build status
 
