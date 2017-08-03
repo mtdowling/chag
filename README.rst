@@ -255,3 +255,21 @@ Updates the version and date of the most recent changelog entry.
 .. image:: https://travis-ci.org/mtdowling/chag.svg?branch=master
    :target: https://travis-ci.org/mtdowling/chag
    :alt: Build status
+
+Config file
+-----------
+
+`chag` supports to have a configuration file in the project directory named `.chag.config`.
+That file may contain two configuration options that modify the default behavior when chag
+is executed.
+
+::
+
+    # pass --addv to chag tag; i.e.:
+    # chag tag --addv
+    addv=yes
+
+    # pass --sign to chag tag; i.e.:
+    # chag tag --sign
+    sign=yes
+

@@ -272,6 +272,17 @@ next() {
   exit 0
 }
 
+# Test if there is a .chag.config file and if so parse it
+if [ -f '.chag.config' ]; then
+  source '.chag.config'
+  if [ "$addv" == 'yes' ]; then
+    ADDV="--addv"
+  fi
+  if [ "$sign" == 'yes' ]; then
+    SIGN="--sign"
+  fi
+fi
+
 # Removes leading and trailing whitespace from the provided input.
 trim() {
   local var=$@
