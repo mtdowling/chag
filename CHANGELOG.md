@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.1 - 2017-08-18
+
+* Reverted grep command to its original behavior
+
 ## 1.2.0 - 2017-07-23
 
 ### Added
