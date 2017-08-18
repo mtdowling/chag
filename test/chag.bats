@@ -27,5 +27,5 @@
 @test "Invalid commands fail" {
   run ./chag foo
   [ $status -eq 1 ]
-  [ "${lines[0]}" == "[FAILURE] Available commands: contents|tag|latest|entries|update" ]
+  [ "${lines[0]}" == "[FAILURE] Available commands: contents|tag|latest|entries|update|entry|next|create" ]
 }

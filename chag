@@ -11,7 +11,7 @@ set -e
 unset FILENAME TAG SIGN FORCE ADDV
 
 version() {
-  echo "chag 1.1.3"
+  echo "chag 1.2.0"
 }
 
 usage() {
@@ -24,11 +24,52 @@ Options:
   --version  Displays the version number.
 
 Commands:
-  contents   Get the contents of a changelog entry.
-  entries    List all versions in a changelog file.
-  latest     Get the latest tag in a changelog.
-  tag        Create an annotated git tag based on a changelog entry.
-  update     Updates the version and date of the most recent changelog entry.
+  contents Get the contents of a changelog entry.
+  entries  List all versions in a changelog file.
+  latest   Get the latest tag in a changelog.
+  tag      Create an annotated git tag based on a changelog entry.
+  update   Updates the version and date of the most recent changelog entry.
+  create   Creates a new CHANGELOG.md file with a standard header.
+  entry    Add a quick entry to the current version.
+  next     Create a new unreleased version in changelog file.
+EOT
+  exit 0
+}
+
+create_usage() {
+  cat <<EOT
+Usage: chag create [--file <filename> ][--help]
+
+Creates a new file named CHANGELOG.md by default with a changelog header, if one does not exist.
+
+Options:
+  --file     Specify a custom changelog filename
+  --help     Displays this message.
+EOT
+  exit 0
+}
+
+entry_usage() {
+  cat <<EOT
+Usage: chag entry --contents <contents>
+
+Creates a new entry inside of the changelog's latest version with --contents as it's body.
+
+Options:
+  --contents The body of the entry.
+  --help     Displays this message.
+EOT
+  exit 0
+}
+
+next_usage() {
+  cat <<EOT
+Usage: chag next
+
+Creates a new unreleased version inside of the changelog file.
+
+Options:
+  --help     Displays this message.
 EOT
   exit 0
 }
@@ -132,7 +173,7 @@ tag() {
   fi
 
   # Run the command and get the exit code
-  local cmd="git tag $SIGN $FORCE -a -F - $real_tag"
+  local cmd="git tag $SIGN $FORCE -a --cleanup=whitespace -F - $real_tag"
   # Strip extra spaces from the command
   cmd=$(echo $cmd | sed 's/\s+/\s/')
   echo "Tagging $real_tag with the following annotation:"
@@ -194,6 +235,54 @@ get_entry() {
   trim "$(sed -n "$((found_line + 1))","$end_line"p < $FILENAME)"
 }
 
+create() {
+  HEADER="# CHANGELOG\n"
+  [ -f "$FILENAME" ] || printf "${HEADER}" >> $FILENAME
+
+  exit 0
+}
+
+entry() {
+  OPOS=$(grep -n -m 1 "##" $FILENAME | cut -f1 -d:)
+  if [ ! -z $OPOS ]; then
+    WLTOTAL=$(cat $FILENAME | wc -l)
+    INSERT_AT=$(($OPOS + 2))
+
+    if [ $INSERT_AT -gt $WLTOTAL ]; then
+      echo "" >> $FILENAME
+    fi
+
+    sed -i "${INSERT_AT}i \* ${CONTENTS}" $FILENAME
+  else
+    die "No releases found. Please create a release first (e.g. 'chag next')"
+  fi
+
+  exit 0
+}
+
+next() {
+  # Contains a version already
+  if grep -q "##" $FILENAME; then
+    sed -i "0,/##/s//## Unreleased\n\n\n##/" $FILENAME
+  # No previous versions
+  else
+    printf "\n## Unreleased\n\n" >> $FILENAME
+  fi
+
+  exit 0
+}
+
+# Test if there is a .chag.config file and if so parse it
+if [ -f '.chag.config' ]; then
+  source '.chag.config'
+  if [ "$addv" == 'yes' ]; then
+    ADDV="--addv"
+  fi
+  if [ "$sign" == 'yes' ]; then
+    SIGN="--sign"
+  fi
+fi
+
 # Removes leading and trailing whitespace from the provided input.
 trim() {
   local var=$@
@@ -202,12 +291,13 @@ trim() {
   echo "$var"
 }
 
+
 # Show help if no options are provided or if "--help" is passed.
 [ $# -eq 0 ] || [ "$1" == "--help" ] && usage
 # Show the version if just --version is provided.
 [ "$1" == '--version' ] && version && exit 0
 # Ensure a valid command was passed.
-VALID="contents|tag|latest|entries|update"
+VALID="contents|tag|latest|entries|update|entry|next|create"
 [[ $VALID == *$1* ]] || die "Available commands: ${VALID}"
 
 COMMAND="$1"; shift
@@ -218,6 +308,7 @@ while [ $# -gt 0 ]; do
     --help) "${COMMAND}_usage";;
     --file) FILENAME=${1:?"--file cannot be empty"}; shift;;
     --tag) TAG=${1:?"--tag cannot be empty"}; shift;;
+    --contents) CONTENTS=${1:?"--contents cannot be empty"}; shift;;
     --addv) ADDV=1 ;;
     --sign|-s) SIGN="--sign" ;;
     --force|-f) FORCE="--force" ;;
@@ -226,11 +317,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# Find the default changelog if needed.
 if [ -z "$FILENAME" ]; then
   FILENAME=`pwd`"/CHANGELOG.md"
-  [ -f "$FILENAME" ] || FILENAME=`pwd`"/CHANGELOG"
+  ([ -f "$FILENAME" ] || [ $COMMAND == "create" ]) || FILENAME=`pwd`"/CHANGELOG"
 fi
-[ -f "$FILENAME" ] || die "File not found: $FILENAME"
+([ -f "$FILENAME" ] || [ $COMMAND == "create" ]) || die "File not found: $FILENAME"
 
 $COMMAND $opt $@

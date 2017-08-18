@@ -24,7 +24,7 @@ chagcmd="$BATS_TEST_DIRNAME/../chag"
   [ "${lines[1]}" == '===[ BEGIN ]===' ]
   [ "${lines[2]}" == '* Correcting ``--debug`` description.' ]
   [ "${lines[3]}" == '===[  END  ]===' ]
-  [ "${lines[4]}" == 'Running git command: git tag -a -F - 0.0.2' ]
+  [ "${lines[4]}" == 'Running git command: git tag -a --cleanup=whitespace -F - 0.0.2' ]
   [ "${lines[5]}" == '[SUCCESS] Tagged 0.0.2' ]
   run git tag -l -n1 0.0.2
   cd -
